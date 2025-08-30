@@ -2,6 +2,10 @@
 
 A Django web application for "Tendresse," a knitwear company. The project features a public-facing website and a private user area for managing delivery slips and recipients.
 
+## Live Website
+
+The website is live at [https://tendresse.it/](https://tendresse.it/).
+
 ## Features
 
 * **Public Website:** Includes a homepage, contact page, and an Instagram feed integration.
