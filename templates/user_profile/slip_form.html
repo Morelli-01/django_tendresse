@@ -1,0 +1,506 @@
+{% extends 'user_profile/user_area_base.html' %}
+{% load static %}
+
+
+{% block user_content %}
+<h1 class="dashboard-header" data-aos="fade-up">
+    {% if is_edit %}
+        <span data-lang="it">Modifica Bolla</span>
+        <span data-lang="en" class="d-none">Edit Slip</span>
+    {% else %}
+        <span data-lang="it">Crea Nuova Bolla</span>
+        <span data-lang="en" class="d-none">Create New Slip</span>
+    {% endif %}
+</h1>
+
+<div class="form-card" data-aos="fade-up" data-aos-delay="100">
+    <form method="post" id="slip-form">
+        {% csrf_token %}
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label for="slip_number" class="form-label">
+                    <span data-lang="it">Numero Bolla</span>
+                    <span data-lang="en" class="d-none">Slip Number</span>
+                </label>
+                <input type="text" class="form-control" id="slip_number" name="slip_number" value="{{ next_slip_number|default_if_none:'' }}" required placeholder="es: 001">
+            </div>
+            <div class="col-md-4">
+                <label for="slip_year" class="form-label">
+                    <span data-lang="it">Anno</span>
+                    <span data-lang="en" class="d-none">Year</span>
+                </label>
+                <input type="number" class="form-control" id="slip_year" name="slip_year" value="{{ form_data.slip_year|default_if_none:'' }}" required min="2000" max="2100" placeholder="{{ current_year }}">
+            </div>
+            <div class="col-md-4">
+                <label for="date" class="form-label">
+                    <span data-lang="it">Data</span>
+                    <span data-lang="en" class="d-none">Date</span>
+                </label>
+                <input type="date" class="form-control" id="date" name="date" value="{{ form_data.date|default_if_none:'' }}" required>
+            </div>
+            <div class="col-md-12">
+                <label for="recipient" class="form-label d-block">
+                    <span data-lang="it">Destinatario</span>
+                    <span data-lang="en" class="d-none">Recipient</span>
+                </label>
+                <div class="input-group">
+                    <select class="form-select" id="recipient" name="recipient" required>
+                    <option value="" disabled {% if not form_data.recipient %}selected{% endif %}
+                            data-text-it="Seleziona un destinatario"
+                            data-text-en="Select a recipient">
+                        Seleziona un destinatario
+                    </option>
+                        {% for r in recipients %}
+                            <option value="{{ r.id }}" {% if form_data.recipient|slugify == r.id|slugify %}selected{% endif %}>{{ r.company_name }} ({{ r.city }})</option>
+                        {% endfor %}
+                    </select>
+                    <a href="{% url 'add_recipient' %}" class="btn btn-outline-secondary" title="Aggiungi nuovo destinatario">
+                        <i class="fas fa-plus"></i>
+                    </a>
+                </div>
+                {% if not recipients %}
+                <small class="text-danger mt-2 d-block">
+                    <span data-lang="it">Nessun destinatario trovato.</span>
+                    <span data-lang="en" class="d-none">No recipients found.</span>
+                    <a href="{% url 'add_recipient' %}" data-lang="it">Aggiungi uno ora.</a>
+                    <a href="{% url 'add_recipient' %}" data-lang="en" class="d-none">Add one now.</a>
+                </small>
+                {% endif %}
+            </div>
+
+            <div class="col-12">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="different-delivery-address" name="different_delivery_address" {% if form_data.dest_name or form_data.dest_address %}checked{% endif %}>
+                    <label class="form-check-label" for="different-delivery-address">
+                        <span data-lang="it">Indirizzo di consegna diverso da quello del destinatario</span>
+                        <span data-lang="en" class="d-none">Delivery address is different from recipient's</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="col-12 {% if not form_data.dest_name and not form_data.dest_address %}d-none{% endif %}" id="delivery-address-container">
+                <div class="row g-3 border rounded p-3 m-1">
+                    <h5 class="mb-3">
+                        <span data-lang="it">Indirizzo di Consegna Alternativo</span>
+                        <span data-lang="en" class="d-none">Alternate Delivery Address</span>
+                    </h5>
+                    <div class="col-md-12">
+                        <label for="dest_name" class="form-label">
+                            <span data-lang="it">Nome</span>
+                            <span data-lang="en" class="d-none">Name</span>
+                        </label>
+                        <input type="text" class="form-control" id="dest_name" name="dest_name" value="{{ form_data.dest_name|default_if_none:'' }}">
+                    </div>
+                    <div class="col-md-12">
+                        <label for="dest_address" class="form-label">
+                            <span data-lang="it">Indirizzo</span>
+                            <span data-lang="en" class="d-none">Address</span>
+                        </label>
+                        <input type="text" class="form-control" id="dest_address" name="dest_address" value="{{ form_data.dest_address|default_if_none:'' }}">
+                    </div>
+                    <div class="col-md-5">
+                        <label for="dest_city" class="form-label">
+                            <span data-lang="it">Città</span>
+                            <span data-lang="en" class="d-none">City</span>
+                        </label>
+                        <input type="text" class="form-control" id="dest_city" name="dest_city" value="{{ form_data.dest_city|default_if_none:'' }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="dest_cap" class="form-label">CAP</label>
+                        <input type="text" class="form-control" id="dest_cap" name="dest_cap" value="{{ form_data.dest_cap|default_if_none:'' }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="dest_prov" class="form-label">
+                            <span data-lang="it">Provincia (Sigla)</span>
+                            <span data-lang="en" class="d-none">Province (Abbr.)</span>
+                        </label>
+                        <input type="text" class="form-control" id="dest_prov" name="dest_prov" value="{{ form_data.dest_prov|default_if_none:'' }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="dest_state" class="form-label">
+                            <span data-lang="it">Stato</span>
+                            <span data-lang="en" class="d-none">State</span>
+                        </label>
+                        <input type="text" class="form-control" id="dest_state" name="dest_state" value="{{ form_data.dest_state|default_if_none:'' }}">
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <label for="lavorazione" class="form-label">
+                    <span data-lang="it">Lavorazione</span>
+                    <span data-lang="en" class="d-none">Processing</span>
+                </label>
+                <select name="lavorazione" id="lavorazione" class="form-select" required>
+                    <option value="" disabled {% if not form_data.lavorazione %}selected{% endif %}>Scegli un'opzione</option>
+                    <option value="Smacchinatura" {% if form_data.lavorazione == 'Smacchinatura' %}selected{% endif %}>Smacchinatura</option>
+                    <option value="Taglio" {% if form_data.lavorazione == 'Taglio' %}selected{% endif %}>Taglio</option>
+                    <option value="Confezione" {% if form_data.lavorazione == 'Confezione' %}selected{% endif %}>Confezione</option>
+                    <option value="Ricamo/Applicazione" {% if form_data.lavorazione == 'Ricamo/Applicazione' %}selected{% endif %}>Ricamo/Applicazione</option>
+                    <option value="Da Trattare" {% if form_data.lavorazione == 'Da Trattare' %}selected{% endif %}>Da Trattare</option>
+                    <option value="Asole/Bottoni" {% if form_data.lavorazione == 'Asole/Bottoni' %}selected{% endif %}>Asole/Bottoni</option>
+                    <option value="Stiro/Ripasso/Imbusto" {% if form_data.lavorazione == 'Stiro/Ripasso/Imbusto' %}selected{% endif %}>Stiro/Ripasso/Imbusto</option>
+                    <option value="Stampa" {% if form_data.lavorazione == 'Stampa' %}selected{% endif %}>Stampa</option>
+                </select>
+
+            </div>
+            <div class="col-md-6">
+                <label for="resp_spedizione" class="form-label">
+                    <span data-lang="it">Responsabile Spedizione</span>
+                    <span data-lang="en" class="d-none">Shipping Responsible</span>
+                </label>
+                <select name="resp_spedizione" id="resp_spedizione" class="form-select" required>
+                    <option value="" disabled {% if not form_data.resp_spedizione %}selected{% endif %}>Scegli un'opzione</option>
+                    <option value="mittente" {% if form_data.resp_spedizione == 'mittente' %}selected{% endif %}>Mittente</option>
+                    <option value="destinatario" {% if form_data.resp_spedizione == 'destinatario' %}selected{% endif %}>Destinatario</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label for="data_trasp" class="form-label">
+                    <span data-lang="it">Data Trasporto</span>
+                    <span data-lang="en" class="d-none">Transport Date</span>
+                </label>
+                <input type="date" class="form-control" id="data_trasp" name="data_trasp" value="{{ form_data.data_trasp|default_if_none:'' }}">
+            </div>
+            <div class="col-md-6">
+                <label for="aspetto" class="form-label">
+                    <span data-lang="it">Aspetto dei Beni</span>
+                    <span data-lang="en" class="d-none">Goods Appearance</span>
+                </label>
+                <input type="text" class="form-control" id="aspetto" name="aspetto" value="{{ form_data.aspetto|default_if_none:'visibile' }}">
+            </div>
+        </div>
+
+        <hr class="my-4">
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="h5 m-0">
+                <span data-lang="it">Articoli</span>
+                <span data-lang="en" class="d-none">Items</span>
+            </h3>
+            <button type="button" id="add-item-btn" class="btn btn-success btn-sm">
+                <i class="fas fa-plus me-2"></i>
+                <span data-lang="it">Aggiungi Articolo</span>
+                <span data-lang="en" class="d-none">Add Item</span>
+            </button>
+        </div>
+        
+        <div class="d-none d-md-flex row g-3 mb-2 fw-bold text-muted">
+            <div class="col-md-5"><th><span data-lang="it">Descrizione</span><span data-lang="en" class="d-none">Description</span></th></div>
+               
+
+            <div class="col-md-2"><th><span data-lang="it">Quantità</span><span data-lang="en" class="d-none">Quantity</span></th></div>
+            <div class="col-md-2">U.M.</div>
+            <div class="col-md-2"><th><span data-lang="it">Note</span><span data-lang="en" class="d-none">Notes</span></th></div>
+            <div class="col-md-1"></div>
+        </div>
+
+        <div id="items-container">
+            {% if form_data.items_ %}
+                {% for item in form_data.items_ %}
+                    <div class="row g-3 mb-3 item-row">
+                        <div class="col-md-5">
+                            <label class="form-label d-md-none">
+                                <span data-lang="it">Descrizione</span>
+                                <span data-lang="en" class="d-none">Description</span>
+                            </label>
+                            <select class="form-control" name="item_description" required>
+                                <option value="" disabled {% if not item.description %}selected{% endif %}>Scegli un'opzione</option>
+                                <option value="Filato composizioni diverse" {% if item.description == 'Filato composizioni diverse' %}selected{% endif %}>Filato composizioni diverse</option>
+                                <option value="Capi in teli composizioni diverse" {% if item.description == 'Capi in teli composizioni diverse' %}selected{% endif %}>Capi in teli composizioni diverse</option>
+                                <option value="Capi di maglieria donna" {% if item.description == 'Capi di maglieria donna' %}selected{% endif %}>Capi di maglieria donna</option>
+                                <option value="Tessuto composizioni diverse" {% if item.description == 'Tessuto composizioni diverse' %}selected{% endif %}>Tessuto composizioni diverse</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label d-md-none">
+                                <span data-lang="it">Quantità</span>
+                                <span data-lang="en" class="d-none">Quantity</span>
+                            </label>
+                            <input type="number" step="any" class="form-control" name="item_quantity" value="{{ item.quantity|default_if_none:'1' }}" required>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label d-md-none">
+                                <span data-lang="it">U.M.</span>
+                                <span data-lang="en" class="d-none">Unit</span>
+                            </label>
+                            <input type="text" class="form-control" name="item_unit" value="{{ item.unit|default_if_none:' ' }}">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label d-md-none">
+                                <span data-lang="it">Note Articolo</span>
+                                <span data-lang="en" class="d-none">Item Note</span>
+                            </label>
+                            <input type="text" class="form-control" name="item_note" value="{{ item.note|default_if_none:'' }}">
+                        </div>
+                        <div class="col-md-1 d-flex align-items-end">
+                            <button type="button" class="btn btn-danger remove-item"
+                                    data-bs-toggle="tooltip" data-bs-placement="top" title="{% if request.LANGUAGE_CODE == 'en' %}Remove{% else %}Rimuovi{% endif %}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="row g-3 mb-3 item-row">
+                    <div class="col-md-5">
+                        <label class="form-label d-md-none">
+                            <span data-lang="it">Descrizione</span>
+                            <span data-lang="en" class="d-none">Description</span>
+                        </label>
+                        <select class="form-control" name="item_description" required>
+                            <option value="" selected disabled>Scegli un'opzione</option>
+                            <option value="Filato composizioni diverse">Filato composizioni diverse</option>
+                            <option value="Capi in teli composizioni diverse">Capi in teli composizioni diverse</option>
+                            <option value="Capi di maglieria donna">Capi di maglieria donna</option>
+                            <option value="Tessuto composizioni diverse">Tessuto composizioni diverse</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label d-md-none">
+                            <span data-lang="it">Quantità</span>
+                            <span data-lang="en" class="d-none">Quantity</span>
+                        </label>
+                        <input type="number" step="any" class="form-control" name="item_quantity" value="1" required>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label d-md-none">
+                            <span data-lang="it">U.M.</span>
+                            <span data-lang="en" class="d-none">Unit</span>
+                        </label>
+                        <input type="text" class="form-control" name="item_unit" value=" ">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label d-md-none">
+                            <span data-lang="it">Note Articolo</span>
+                            <span data-lang="en" class="d-none">Item Note</span>
+                        </label>
+                        <input type="text" class="form-control" name="item_note">
+                    </div>
+                    <div class="col-md-1 d-flex align-items-end">
+                        <button type="button" class="btn btn-danger remove-item" style="display:none;"
+                                data-bs-toggle="tooltip" data-bs-placement="top" title="{% if request.LANGUAGE_CODE == 'en' %}Remove{% else %}Rimuovi{% endif %}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        
+        <input type="hidden" name="items" id="items-json-input">
+
+        <hr class="my-4">
+
+        <!-- <div class="col-12">
+            <label for="notes" class="form-label">
+                <span data-lang="it">Note Generali (Opzionale)</span>
+                <span data-lang="en" class="d-none">General Notes (Optional)</span>
+            </label>
+            <textarea class="form-control" id="notes" name="notes" rows="3">{{ form_data.notes|default_if_none:'' }}</textarea>
+        </div> -->
+
+        <div class="form-actions mt-4">
+            <a href="{% url 'dashboard' %}" class="btn btn-secondary me-2">
+                <span data-lang="it">Annulla</span>
+                <span data-lang="en" class="d-none">Cancel</span>
+            </a>
+            <button type="submit" class="btn btn-primary">
+                {% if is_edit %}
+                    <span data-lang="it">Aggiorna Bolla</span>
+                    <span data-lang="en" class="d-none">Update Slip</span>
+                {% else %}
+                    <span data-lang="it">Crea Bolla</span>
+                    <span data-lang="en" class="d-none">Create Slip</span>
+                {% endif %}
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock user_content %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const itemsContainer = document.getElementById('items-container');
+    const addItemBtn = document.getElementById('add-item-btn');
+    const form = document.getElementById('slip-form');
+    const itemsJsonInput = document.getElementById('items-json-input');
+    const differentDeliveryAddressCheckbox = document.getElementById('different-delivery-address');
+    const deliveryAddressContainer = document.getElementById('delivery-address-container');
+
+    if (differentDeliveryAddressCheckbox) {
+        const deliveryAddressInputs = deliveryAddressContainer.querySelectorAll('input, select');
+
+        function setRequired(required) {
+            deliveryAddressInputs.forEach(input => {
+                input.required = required;
+            });
+        }
+
+        differentDeliveryAddressCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                deliveryAddressContainer.classList.remove('d-none');
+                setRequired(true);
+            } else {
+                deliveryAddressContainer.classList.add('d-none');
+                setRequired(false);
+                deliveryAddressInputs.forEach(input => {
+                    input.value = '';
+                });
+            }
+        });
+
+        if (differentDeliveryAddressCheckbox.checked) {
+            deliveryAddressContainer.classList.remove('d-none');
+            setRequired(true);
+        } else {
+            deliveryAddressContainer.classList.add('d-none');
+            setRequired(false);
+        }
+    }
+
+    // Predefined options for item descriptions
+    const predefinedDescriptions = [
+        "Filato composizioni diverse",
+        "Capi in teli composizioni diverse",
+        "Capi di maglieria donna",
+        "Tessuto composizioni diverse"
+    ];
+
+    function createDescriptionSelect(selectedValue = '') {
+        let optionsHtml = '<option value="" disabled>Scegli un\'opzione</option>';
+        predefinedDescriptions.forEach(desc => {
+            const selected = selectedValue === desc ? 'selected' : '';
+            optionsHtml += `<option value="${desc}" ${selected}>${desc}</option>`;
+        });
+        return optionsHtml;
+    }
+
+    function updateRemoveButtons() {
+        const itemRows = itemsContainer.querySelectorAll('.item-row');
+        if (itemRows.length <= 1) {
+            itemRows.forEach(row => {
+                const removeButton = row.querySelector('.remove-item');
+                if (removeButton) {
+                    removeButton.style.display = 'none';
+                }
+            });
+        } else {
+            itemRows.forEach(row => {
+                const removeButton = row.querySelector('.remove-item');
+                if (removeButton) {
+                    removeButton.style.display = 'block';
+                }
+            });
+        }
+    }
+
+    function createItemRow(itemData = {}) {
+        const { description = '', quantity = '1', unit = '', note = '' } = itemData;
+
+        const row = document.createElement('div');
+        row.classList.add('row', 'g-3', 'mb-3', 'item-row');
+        row.innerHTML = `
+            <div class="col-md-5">
+                <label class="form-label d-md-none">
+                    <span data-lang="it">Descrizione</span>
+                    <span data-lang="en" class="d-none">Description</span>
+                </label>
+                <select class="form-control" name="item_description" required>
+                    ${createDescriptionSelect(description)}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label d-md-none">
+                    <span data-lang="it">Quantità</span>
+                    <span data-lang="en" class="d-none">Quantity</span>
+                </label>
+                <input type="number" step="any" class="form-control" name="item_quantity" value="${quantity}" required>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label d-md-none">
+                    <span data-lang="it">U.M.</span>
+                    <span data-lang="en" class="d-none">Unit</span>
+                </label>
+                <input type="text" class="form-control" name="item_unit" value="${unit}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label d-md-none">
+                    <span data-lang="it">Note Articolo</span>
+                    <span data-lang="en" class="d-none">Item Note</span>
+                </label>
+                <input type="text" class="form-control" name="item_note" value="${note}">
+            </div>
+            <div class="col-md-1 d-flex align-items-end">
+                <button type="button" class="btn btn-danger remove-item"
+                        data-bs-toggle="tooltip" data-bs-placement="top" title="Rimuovi">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        `;
+        return row;
+    }
+
+    addItemBtn.addEventListener('click', function() {
+        itemsContainer.appendChild(createItemRow());
+        updateRemoveButtons();
+        switchLanguage(document.querySelector('[data-lang]:not(.d-none)').getAttribute('data-lang'));
+    });
+
+    itemsContainer.addEventListener('click', function(e) {
+        const removeButton = e.target.closest('.remove-item');
+        if (removeButton) {
+            const row = removeButton.closest('.item-row');
+            row.remove();
+            updateRemoveButtons();
+        }
+    });
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const items = [];
+        const itemRows = itemsContainer.querySelectorAll('.item-row');
+
+        itemRows.forEach(row => {
+            const description = row.querySelector('[name="item_description"]').value;
+            const quantity = row.querySelector('[name="item_quantity"]').value;
+            const unit = row.querySelector('[name="item_unit"]').value;
+            const notes = row.querySelector('[name="item_note"]').value;
+
+            if (description && quantity && unit) {
+                items.push({
+                    description: description,
+                    quantity: quantity,
+                    unit: unit,
+                    note: notes
+                });
+            }
+        });
+
+        itemsJsonInput.value = JSON.stringify(items);
+        form.submit();
+    });
+    
+    // Initial rendering and button state update
+    function initItems() {
+        const existingItems = JSON.parse(itemsJsonInput.value || '[]');
+        if (existingItems.length > 0) {
+            itemsContainer.innerHTML = ''; // Clear the initial placeholder if items exist
+            existingItems.forEach(item => {
+                itemsContainer.appendChild(createItemRow(item));
+            });
+        } else {
+            // Ensure there is at least one item row on a fresh form
+            if (itemsContainer.querySelectorAll('.item-row').length === 0) {
+                itemsContainer.appendChild(createItemRow());
+            }
+        }
+        updateRemoveButtons();
+    }
+    
+    // Handle the initial state on page load
+    initItems();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,90 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>{{ page_title }} - Tendresse</title>
+    <meta name="description" content="Discover our latest knitwear collections.">
+    <link rel="icon" href="{% static 'images/favicon.ico' %}" type="image/x-icon">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/0adb953a4a.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      "itemListElement": [
+        {% for collection_data in collections %}
+        {
+          "@type": "ListItem",
+          "position": {{ forloop.counter }},
+          "url": "https://www.tendresse.it{% url 'collection_detail' collection_data.collection.pk %}",
+          "name": "{{ collection_data.collection.name }}"
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+      ]
+    }
+    </script>
+</head>
+<body>
+
+{% include 'basics/navbar.html' %}
+
+<header class="page-header">
+    <div class="container" data-lang="en" style="display: none;">
+        <h1 class="section-title">Collections</h1>
+        <p class="lead text-muted">Explore our latest handcrafted knitwear collections.</p>
+    </div>    
+    <div class="container" data-lang="it">
+        <h1 class="section-title">Collezioni</h1>
+        <p class="lead text-muted">Esplora le nostre ultime collezioni di maglieria artigianale.</p>
+    </div>
+</header>
+
+<main class="section">
+    <div class="container">
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+            {% for collection_data in collections %}
+            <div class="col" data-aos="fade-up">
+                <div class="card h-100 shadow-sm border-0 rounded-3 overflow-hidden">
+                    {% if collection_data.main_image %}
+                    <img src="{{ collection_data.main_image.detail_view.url }}" class="card-img-top" alt="{{ collection_data.collection.name }} main image">
+                    {% else %}
+                    <svg class="bd-placeholder-img card-img-top" width="100%" height="225" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Placeholder: No Image" preserveAspectRatio="xMidYMid slice" focusable="false"><title>Placeholder</title><rect width="100%" height="100%" fill="#868e96"></rect><text x="50%" y="50%" fill="#dee2e6" dy=".3em">No Image</text></svg>
+                    {% endif %}
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">{{ collection_data.collection.name }}</h5>
+                        <p class="card-text text-muted">{{ collection_data.collection.season }}</p>
+                        <p class="card-text">{{ collection_data.collection.description }}</p>
+                        <a href="{% url 'collection_detail' collection_data.collection.pk %}" class="btn btn-primary mt-auto">
+                            <span data-lang="it">Vedi Collezione</span>
+                            <span data-lang="en" class="d-none">View Collection</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12">
+                <div class="alert alert-info text-center" role="alert">
+                    No collections have been added yet.
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</main>
+
+{% include 'basics/footer.html' %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+    AOS.init({ duration: 800, once: true });
+</script>
+</body>
+</html>

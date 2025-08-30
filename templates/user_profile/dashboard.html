@@ -1,0 +1,292 @@
+{% extends 'user_profile/user_area_base.html' %}
+{% load static %}
+
+{% block user_content %}
+<style>
+    /* Hide the tooltip text spans from the page content */
+    .tooltip-text {
+        display: none !important;
+    }
+    
+    /* Highlight search matches */
+    .search-highlight {
+        background-color: yellow;
+        font-weight: bold;
+    }
+    
+    /* Fade out filtered rows */
+    .filtered-out {
+        opacity: 0.3;
+        transition: opacity 0.3s ease;
+    }
+    
+    /* Search stats styling */
+    .search-stats {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+</style>
+
+<h1 class="dashboard-header mb-4" data-aos="fade-up">
+    <span data-lang="it">Dashboard Bolle di Consegna</span>
+    <span data-lang="en" class="d-none">Delivery Slips Dashboard</span>
+</h1>
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3" data-aos="fade-up" data-aos-delay="100">
+    <a href="{% url 'create_slip' %}" class="btn btn-success">
+        <i class="fas fa-plus me-2"></i>
+        <span data-lang="it">Nuova Bolla</span>
+        <span data-lang="en" class="d-none">New Slip</span>
+    </a>
+    
+    <!-- Real-time Search Bar -->
+    <div class="search-container flex-grow-1 flex-md-grow-0">
+        <div class="d-flex flex-column" style="min-width: 300px;">
+            <div class="input-group">
+                <input type="text" 
+                       id="realTimeSearch"
+                       class="form-control" 
+                       data-text-it="Filtra bolle..." 
+                       data-text-en="Filter slips..."
+                       placeholder="Filtra bolle...">
+                <button class="btn btn-outline-secondary" type="button" id="clearSearch">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="searchStats" class="search-stats mt-1">
+                <span data-lang="it">Mostrando <span id="visibleCount">{{ slips.count }}</span> di <span id="totalCount">{{ slips.count }}</span> bolle</span>
+                <span data-lang="en" class="d-none">Showing <span id="visibleCountEn">{{ slips.count }}</span> of <span id="totalCountEn">{{ slips.count }}</span> slips</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if slips %}
+<div class="table-responsive" data-aos="fade-up" data-aos-delay="200">
+    <table class="table table-hover table-striped table-slips align-middle" id="slipsTable">
+        <thead class="table-dark">
+            <tr>
+                <th><span data-lang="it">Numero Bolla</span><span data-lang="en" class="d-none">Slip Number</span></th>
+                <th><span data-lang="it">Data</span><span data-lang="en" class="d-none">Date</span></th>
+                <th><span data-lang="it">Destinatario</span><span data-lang="en" class="d-none">Recipient</span></th>
+                <th><span data-lang="it">Lavorazione</span><span data-lang="en" class="d-none">Processing</span></th>
+                <th><span data-lang="it">Quantità Totale</span><span data-lang="en" class="d-none">Total Quantity</span></th>
+                <th><span data-lang="it">Azioni</span><span data-lang="en" class="d-none">Actions</span></th>
+            </tr>
+        </thead>
+        <tbody id="slipsTableBody">
+            {% for slip in slips %}
+            <tr class="slip-row" data-searchable="{{ slip.full_slip_number }} {{ slip.date|date:'d/m/Y' }} {{ slip.recipient.company_name }} {{ slip.lavorazione }} {{ slip.get_total_quantity }}">
+                <td data-label="Numero Bolla:" class="searchable-cell">{{ slip.full_slip_number }}</td>
+                <td data-label="Data:" class="searchable-cell">{{ slip.date|date:"d/m/Y" }}</td>
+                <td data-label="Destinatario:" class="searchable-cell">{{ slip.recipient.company_name }}</td>
+                <td data-label="Lavorazione:" class="searchable-cell">{{ slip.lavorazione }}</td>
+                <td data-label="Quantità Totale:" class="searchable-cell">{{ slip.get_total_quantity }}</td>
+                <td>
+                    <div class="btn-group" role="group">
+                        <a href="{% url 'edit_slip' slip.pk %}" class="btn btn-sm btn-info text-white"
+                           data-bs-toggle="tooltip" data-bs-placement="top" title=""
+                           data-tooltip-en="Edit"
+                           data-tooltip-it="Modifica"
+                           style="background-color: #5D9CEC; border-radius: 5px;border-color:#5D9CEC;">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a href="{% url 'download_slip' slip.pk %}" class="btn btn-sm btn-success"
+                           data-bs-toggle="tooltip" data-bs-placement="top" title=""                                    
+                           data-tooltip-en="Download"
+                           data-tooltip-it="Scarica"
+                           style="background-color: #4CAF50; border-radius: 5px;border-color:#4CAF50;">
+                            <i class="fas fa-download"></i>
+                        </a>
+                        <a href="{% url 'download_slip' slip.pk %}?view=true" target="_blank" class="btn btn-sm btn-secondary" 
+                           data-bs-toggle="tooltip" data-bs-placement="top" title=""
+                           data-tooltip-en="View"
+                           data-tooltip-it="Visualizza",
+                           style="background-color: #34495E; border-radius: 5px;border-color:#34495E;">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <form action="{% url 'delete_slip' slip.pk %}" method="post" class="d-inline-block"
+                              onsubmit="return confirm('Sei sicuro di voler eliminare questa bolla?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-danger" data-bs-toggle="tooltip" data-bs-placement="top" title=""
+                                    data-tooltip-en="Delete"
+                                    data-tooltip-it="Elimina"
+                                    style="background-color: #E74C3C; border-color:#E74C3C;"
+                                    >
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- No results message (hidden by default) -->
+<div id="noResultsMessage" class="alert alert-info text-center mt-5 d-none" role="alert">
+    <h4 class="alert-heading">
+        <i class="fas fa-search me-2"></i>
+        <span data-lang="it">Nessuna Bolla Trovata!</span>
+        <span data-lang="en" class="d-none">No Slips Found!</span>
+    </h4>
+    <p>
+        <span data-lang="it">Nessuna bolla corrisponde ai criteri di ricerca. Prova a modificare il filtro.</span>
+        <span data-lang="en" class="d-none">No slips match your search criteria. Try modifying your filter.</span>
+    </p>
+</div>
+
+{% else %}
+<div class="alert alert-info text-center mt-5" role="alert" data-aos="fade-up" data-aos-delay="100">
+    <h4 class="alert-heading">
+        <span data-lang="it">Nessuna Bolla Trovata!</span>
+        <span data-lang="en" class="d-none">No Slips Found!</span>
+    </h4>
+    <p>
+        <span data-lang="it">Inizia creando la tua prima bolla di consegna cliccando sul pulsante "Nuova Bolla".</span>
+        <span data-lang="en" class="d-none">Start by creating your first delivery slip by clicking the "New Slip" button.</span>
+    </p>
+    <hr>
+    <a href="{% url 'create_slip' %}" class="btn btn-primary">
+        <i class="fas fa-plus me-2"></i>
+        <span data-lang="it">Crea Nuova Bolla</span>
+        <span data-lang="en" class="d-none">Create New Slip</span>
+    </a>
+</div>
+{% endif %}
+{% endblock user_content %}
+
+{% block extra_js %}
+<script>
+    let totalSlips = 0;
+    let visibleSlips = 0;
+
+    function highlightText(text, searchTerm) {
+        if (!searchTerm) return text;
+        
+        const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+        return text.replace(regex, '<span class="search-highlight">$1</span>');
+    }
+
+    function removeHighlights() {
+        document.querySelectorAll('.search-highlight').forEach(el => {
+            el.outerHTML = el.innerHTML;
+        });
+    }
+
+    function updateSearchStats() {
+        document.getElementById('visibleCount').textContent = visibleSlips;
+        document.getElementById('visibleCountEn').textContent = visibleSlips;
+        document.getElementById('totalCount').textContent = totalSlips;
+        document.getElementById('totalCountEn').textContent = totalSlips;
+    }
+
+    function filterTable(searchTerm) {
+        const rows = document.querySelectorAll('.slip-row');
+        const table = document.getElementById('slipsTable');
+        const noResultsMessage = document.getElementById('noResultsMessage');
+        
+        // Remove previous highlights
+        removeHighlights();
+        
+        visibleSlips = 0;
+        
+        if (!searchTerm.trim()) {
+            // Show all rows when search is empty
+            rows.forEach(row => {
+                row.style.display = '';
+                row.classList.remove('filtered-out');
+                visibleSlips++;
+            });
+            
+            table.style.display = '';
+            noResultsMessage.classList.add('d-none');
+        } else {
+            // Filter rows based on search term
+            const lowerSearchTerm = searchTerm.toLowerCase();
+            
+            rows.forEach(row => {
+                const searchableText = row.getAttribute('data-searchable').toLowerCase();
+                const matches = searchableText.includes(lowerSearchTerm);
+                
+                if (matches) {
+                    row.style.display = '';
+                    row.classList.remove('filtered-out');
+                    visibleSlips++;
+                    
+                    // Highlight matching text in visible cells
+                    row.querySelectorAll('.searchable-cell').forEach(cell => {
+                        const originalText = cell.textContent;
+                        if (originalText.toLowerCase().includes(lowerSearchTerm)) {
+                            cell.innerHTML = highlightText(originalText, searchTerm);
+                        }
+                    });
+                } else {
+                    row.style.display = 'none';
+                    row.classList.add('filtered-out');
+                }
+            });
+            
+            // Show/hide table and no results message
+            if (visibleSlips === 0) {
+                table.style.display = 'none';
+                noResultsMessage.classList.remove('d-none');
+            } else {
+                table.style.display = '';
+                noResultsMessage.classList.add('d-none');
+            }
+        }
+        
+        updateSearchStats();
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const savedLang = getCookie('user_language') || 'it';
+        const searchInput = document.getElementById('realTimeSearch');
+        const clearButton = document.getElementById('clearSearch');
+        
+        // Initialize counters
+        totalSlips = document.querySelectorAll('.slip-row').length;
+        visibleSlips = totalSlips;
+        updateSearchStats();
+        
+        // Update search placeholder text
+        if (searchInput) {
+            const placeholderText = searchInput.getAttribute(`data-text-${savedLang}`);
+            if (placeholderText) {
+                searchInput.setAttribute('placeholder', placeholderText);
+            }
+            
+            // Real-time search as user types
+            searchInput.addEventListener('input', function() {
+                filterTable(this.value);
+                
+                // Show/hide clear button
+                if (this.value.trim()) {
+                    clearButton.style.display = 'block';
+                } else {
+                    clearButton.style.display = 'block';
+                }
+            });
+            
+            // Clear search functionality
+            clearButton.addEventListener('click', function() {
+                searchInput.value = '';
+                filterTable('');
+                searchInput.focus();
+            });
+            
+            // Handle Enter key
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    filterTable(this.value);
+                }
+            });
+        }
+        
+
+    });
+</script>
+{% endblock %}

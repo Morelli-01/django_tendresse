@@ -1,0 +1,11 @@
+# humans.txt
+# We are people, not machines.
+
+# TEAM
+Developer: Nicola Morelli
+Contact: nmorelli2001@gmail.com
+
+# SITE
+Last update: 2025-08-29
+Language: English
+Doctype: HTML5

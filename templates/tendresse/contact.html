@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <title data-lang="it">Contatti e Orari - Tendresse</title>
+    <title data-lang="en" style="display: none;">Contact and Hours - Tendresse</title>
+    <meta name="description" content="Orari di apertura, indirizzo e contatti di Tendresse. Trovaci a Carpi o inviaci un messaggio.">
+    <link rel="icon" href="{% static 'images/favicon.ico' %}" type="image/x-icon">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/0adb953a4a.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+
+{% include 'basics/navbar.html' %}
+
+<header class="page-header">
+    <div class="container">
+        <h1 class="section-title" data-lang="it">Contattaci</h1>
+        <h1 class="section-title" data-lang="en" style="display: none;">Contact Us</h1>
+        <p class="lead text-muted" data-lang="it">Siamo a tua disposizione. Trova i nostri recapiti o inviaci un messaggio.</p>
+        <p class="lead text-muted" data-lang="en" style="display: none;">We are at your disposal. Find our details or send us a message.</p>
+    </div>
+</header>
+
+<main class="section pt-0">
+    <div class="container">
+        <div class="row g-5">
+            <div class="col-lg-7">
+                 <div class="row g-4">
+                    <div class="col-12">
+                        <div class="contact-card text-start">
+                            <h5 class="card-title text-center"><i class="fas fa-map-marker-alt card-icon mb-3"></i><br> Indirizzo</h5>
+                            <p class="card-text text-center">Via Liguria 39, Carpi (MO), 41012, Italia</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="contact-card h-100">
+                             <i class="fas fa-clock card-icon mb-3"></i>
+                             <h5 class="card-title" data-lang="it">Orari</h5>
+                             <h5 class="card-title" data-lang="en" style="display: none;">Hours</h5>
+                             <ul class="list-unstyled mb-0">
+                                 <li><span data-lang="it">Lun-Ven:</span><span data-lang="en" style="display: none;">Mon-Fri:</span> 9-19</li>
+                                 <li><span data-lang="it">Sab:</span><span data-lang="en" style="display: none;">Sat:</span> 9-12:30</li>
+                             </ul>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                         <div class="contact-card h-100">
+                            <i class="fas fa-phone card-icon mb-3"></i>
+                            <h5 class="card-title">Contatti</h5>
+                            <p class="card-text mb-0">
+                                <a href="mailto:info@tendresse.it">info@tendresse.it</a><br>
+                                <a href="tel:+391234567890">Tel: 059 642545</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="form-wrapper h-100">
+                    <h3 class="section-title text-center mb-4" data-lang="it">Inviaci un Messaggio</h3>
+                    <h3 class="section-title text-center mb-4" data-lang="en" style="display: none;">Send us a Message</h3>
+                    <form method="POST">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="name" class="form-label" data-lang="it">Nome</label>
+                            <label for="name" class="form-label" data-lang="en" style="display: none;">Name</label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="message" class="form-label" data-lang="it">Messaggio</label>
+                            <label for="message" class="form-label" data-lang="en" style="display: none;">Message</label>
+                            <textarea class="form-control" id="message" name="message" rows="5" required></textarea>
+                        </div>
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-custom w-100" data-lang="it">Invia Messaggio</button>
+                            <button type="submit" class="btn btn-custom w-100" data-lang="en" style="display: none;">Send Message</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<section class="section">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="section-title" data-lang="it">Come Raggiungerci</h2>
+            <h2 class="section-title" data-lang="en" style="display: none;">How to Reach Us</h2>
+        </div>
+        <div class="map-container">
+            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2838.481525911422!2d10.8672938155254!3d44.78779607909871!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x477fef6a7b8f3a3b%3A0x4a18f1f8a8b1c4e6!2sVia%20Liguria%2C%2039%2C%2041012%20Carpi%20MO!5e0!3m2!1sit!2sit!4v1663162793265!5m2!1sit!2sit"
+                    width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+        </div>
+    </div>
+</section>
+
+{% include 'basics/footer.html' %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        switchLanguage(getCookie('user_language'));
+    });
+</script>
+
+</body>
+</html>

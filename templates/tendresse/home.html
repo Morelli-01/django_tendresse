@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <title>{{ page_title.it }}</title>
+    <meta name="description"
+          content="{{ meta_description.it }}">
+    <link rel="icon" href="{% static 'images/favicon.ico' %}" type="image/x-icon">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Roboto:wght@300;400;500&display=swap"
+          rel="stylesheet">
+    <script src="https://kit.fontawesome.com/0adb953a4a.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'G-XXXXXXXXXX');
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Tendresse",
+      "url": "https://www.tendresse.it/",
+      "logo": "https://www.tendresse.it/static/images/logo.svg",
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "telephone": "+39-059-691-573",
+        "contactType": "customer service"
+      }
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Tendresse",
+      "url": "https://www.tendresse.it/"
+    }
+    </script>
+</head>
+<body>
+
+{% include 'basics/navbar.html' %}
+
+<header class="hero">
+    <img src="{{ hero_image.hero_desktop.url }}"
+         class="hero-background"
+         alt="{{ hero_image.alt_text|default:'Hero Background Image' }}"
+         srcset="{{ hero_image.hero_mobile.url }} 768w, {{ hero_image.hero_desktop.url }} 1920w"
+         sizes="(max-width: 768px) 100vw, 1920px"
+         loading="lazy"
+    >
+    <div class="container">
+        <h1 class="display-3 hero-title animate__animated animate__fadeInUp">
+            <span data-lang="it">{{ hero_title.it }}</span>
+            <span data-lang="en" style="display: none;">{{ hero_title.en }}</span>
+        </h1>
+        <p class="lead animate__animated animate__fadeInUp animate__delay-1s">
+            <span data-lang="it">{{ hero_subtitle.it }}</span>
+            <span data-lang="en" style="display: none;">{{ hero_subtitle.en }}</span>
+        </p>
+    </div>
+</header>
+
+<section class="section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6" data-aos="fade-right">
+                <div class="content-image-wrapper">
+                    <div id="aboutCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel">
+                        <div class="carousel-inner">
+                            {% for image in about_images %}
+                            <div class="carousel-item {% if forloop.first %}active{% endif %}" data-bs-interval="3500">
+                                <img
+                                    src="{{ image.about_large.url }}"
+                                    alt="{{ image.alt_text|default:'Our Story Image' }}"
+                                    class="d-block w-100"
+                                    loading="lazy"
+                                    srcset="{{ image.about_medium.url }} 720w, {{ image.about_large.url }} 1140w"
+                                    sizes="(max-width: 768px) 720px, 1140px"
+                                >
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-5 offset-lg-1" data-aos="fade-left" data-aos-delay="200">
+                <div data-lang="it">
+                    <h2 class="section-title text-start">{{ about_title.it }}</h2>
+                    <p>{{ about_text.it }}</p>
+                </div>
+                <div data-lang="en" style="display: none;">
+                    <h2 class="section-title text-start">{{ about_title.en }}</h2>
+                    <p>{{ about_text.en }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section bg-light">
+    <div class="container">
+        <div class="row align-items-center">
+             <div class="col-lg-6 offset-lg-1 order-lg-2" data-aos="fade-left">
+                <div class="content-image-wrapper">
+                    <div id="territoryCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel">
+                        <div class="carousel-inner">
+                            {% for image in territory_images %}
+                            <div class="carousel-item {% if forloop.first %}active{% endif %}" data-bs-interval="3500">
+                                <img
+                                    src="{{ image.carousel_medium.url }}"
+                                    class="d-block w-100"
+                                    alt="{{ image.alt_text|default:'Immagine del territorio di Carpi, dove ha sede Tendresse' }}"
+                                    loading="lazy"
+                                    srcset="{{ image.carousel_small.url }} 400w, {{ image.carousel_medium.url }} 800w, {{ image.carousel_large.url }} 1200w"
+                                    sizes="(max-width: 576px) 400px, (max-width: 992px) 800px, 1200px"
+                                >
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-5 order-lg-1" data-aos="fade-right" data-aos-delay="200">
+                <div data-lang="it">
+                    <h2 class="section-title text-start">{{ territory_title.it }}</h2>
+                    <p>{{ territory_text.it }}</p>
+                </div>
+                 <div data-lang="en" style="display: none;">
+                    <h2 class="section-title text-start">{{ territory_title.en }}</h2>
+                    <p>{{ territory_text.en }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section text-center cta-section">
+    <div class="container" data-aos="fade-up">
+        <div data-lang="it">
+            <h2 class="section-title">{{ cta_title.it }}</h2>
+            <p class="lead">{{ cta_text.it }}</p>
+            <a href="/contact/" class="btn btn-custom btn-lg">{{ cta_button.it }} <i class="fa-solid fa-arrow-right ms-2"></i></a>
+        </div>
+        <div data-lang="en" style="display: none;">
+            <h2 class="section-title">{{ cta_title.en }}</h2>
+            <p class="lead">{{ cta_text.en }}</p>
+            <a href="/contact/" class="btn btn-custom btn-lg">{{ cta_button.en }} <i class="fa-solid fa-arrow-right ms-2"></i></a>
+        </div>
+    </div>
+</section>
+
+{% include 'basics/footer.html' %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+    AOS.init({
+        duration: 800,
+        once: true,
+        offset: 50,
+    });
+    document.addEventListener('DOMContentLoaded', function() {
+        const savedLang = getCookie('user_language') || 'it';
+        switchLanguage(savedLang);
+    });
+</script>
+
+</body>
+</html>

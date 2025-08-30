@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /profile/
+
+Sitemap: https://www.tendresse.it/sitemap.xml

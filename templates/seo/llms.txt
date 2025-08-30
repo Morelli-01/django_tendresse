@@ -1,0 +1,20 @@
+# Tendresse Website Overview
+
+> Tendresse is a knitwear company based in Carpi, Italy, founded in 1992. We specialize in high-quality women's knitwear, focusing on craftsmanship, unique designs, and premium materials. Our website features a public-facing site with information about our company, contact details, and collections, as well as a private user area for managing delivery slips and recipients.
+
+## Key Sections:
+
+### Homepage
+Provides an introduction to Tendresse, our history, and our connection to the territory.
+
+### Collections
+Showcases our latest knitwear collections, with details on each collection and its individual items.
+
+### Contact
+Offers contact information and a form for inquiries.
+
+### Instagram Feed
+Displays our latest posts from Instagram.
+
+### User Profile (Private Area)
+Allows registered users to manage delivery slips and recipient details. This section requires authentication.

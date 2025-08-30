@@ -1,0 +1,68 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Login - {{ page_title.it }}</title>
+    <meta name="description" content="Login to your Tendresse account.">
+    <link rel="icon" href="{% static 'images/favicon.ico' %}" type="image/x-icon">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/0adb953a4a.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+
+{% include 'basics/navbar.html' %}
+
+<div class="login-container">
+    <div class="login-form-card" data-aos="fade-up">
+        <h2 data-lang="it">Accedi</h2>
+        <h2 data-lang="en" style="display: none;">Login</h2>
+        
+        {% if messages %}
+            <ul class="messages list-unstyled">
+                {% for message in messages %}
+                    <li {% if message.tags %}class="{{ message.tags }} alert alert-danger"{% endif %}>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %} {# Django's security token #}
+            <div class="mb-3">
+                <label for="username" class="form-label" data-lang="it">Nome Utente / Email</label>
+                <label for="username" class="form-label" data-lang="en" style="display: none;">Username / Email</label>
+                <input type="text" class="form-control" id="username" name="username" required>
+            </div>
+            <div class="mb-4">
+                <label for="password" class="form-label" data-lang="it">Password</label>
+                <label for="password" class="form-label" data-lang="en" style="display: none;">Password</label>
+                <input type="password" class="form-control" id="password" name="password" required>
+            </div>
+            <div class="d-grid">
+                <button type="submit" class="btn btn-primary btn-lg" data-lang="it">Accedi</button>
+                <button type="submit" class="btn btn-primary btn-lg" data-lang="en" style="display: none;">Login</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% include 'basics/footer.html' %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+    AOS.init({ duration: 800, once: true });
+    document.addEventListener('DOMContentLoaded', function() {
+        const savedLang = getCookie('user_language') || 'it';
+        switchLanguage(savedLang); 
+    });
+</script>
+
+</body>
+</html>

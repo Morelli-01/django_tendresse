@@ -1,0 +1,104 @@
+{% extends 'user_profile/user_area_base.html' %}
+{% load static %}
+
+{% block user_content %}
+<h1 class="dashboard-header mb-4" data-aos="fade-up">
+    {% if is_edit %}
+        <span data-lang="it">Modifica Destinatario</span>
+        <span data-lang="en" style="display: none;">Edit Recipient</span>
+    {% else %}
+        <span data-lang="it">Aggiungi Nuovo Destinatario</span>
+        <span data-lang="en" style="display: none;">Add New Recipient</span>
+    {% endif %}
+</h1>
+
+<div class="form-card" data-aos="fade-up" data-aos-delay="100">
+    <form method="post">
+        {% csrf_token %}
+        <div class="row g-3">
+            <div class="col-12">
+                <label for="company_name" class="form-label">
+                    <span data-lang="it">Ragione Sociale / Nome</span>
+                    <span data-lang="en" style="display: none;">Company Name / Name</span>
+                </label>
+                <input type="text" class="form-control" id="company_name" name="company_name" value="{{ recipient.company_name|default_if_none:'' }}" required>
+            </div>
+            <div class="col-md-6">
+                <label for="address_line1" class="form-label">
+                    <span data-lang="it">Indirizzo / Linea 1</span>
+                    <span data-lang="en" style="display: none;">Address / Line 1</span>
+                </label>
+                <input type="text" class="form-control" id="address_line1" name="address_line1" value="{{ recipient.address_line1|default_if_none:'' }}" required>
+            </div>
+            <div class="col-md-6">
+                <label for="address_line2" class="form-label">
+                    <span data-lang="it">Indirizzo / Linea 2 (Opzionale)</span>
+                    <span data-lang="en" style="display: none;">Address / Line 2 (Optional)</span>
+                </label>
+                <input type="text" class="form-control" id="address_line2" name="address_line2" value="{{ recipient.address_line2|default_if_none:'' }}">
+            </div>
+            <div class="col-md-4">
+                <label for="city" class="form-label">
+                    <span data-lang="it">Città</span>
+                    <span data-lang="en" style="display: none;">City</span>
+                </label>
+                <input type="text" class="form-control" id="city" name="city" value="{{ recipient.city|default_if_none:'' }}" required>
+            </div>
+            <div class="col-md-4">
+                <label for="postal_code" class="form-label">
+                    <span data-lang="it">CAP</span>
+                    <span data-lang="en" style="display: none;">Postal Code</span>
+                </label>
+                <input type="text" class="form-control" id="postal_code" name="postal_code" value="{{ recipient.postal_code|default_if_none:'' }}" required>
+            </div>
+            <div class="col-md-4">
+                <label for="province_sigla" class="form-label">
+                    <span data-lang="it">Provincia (Sigla)</span>
+                    <span data-lang="en" style="display: none;">Province (Sigla)</span>
+                </label>
+                <input type="text" class="form-control" id="province_sigla" name="province_sigla" value="{{ recipient.province_sigla|default_if_none:'' }}">
+            </div>
+            <div class="col-12">
+                <label for="country" class="form-label">
+                    <span data-lang="it">Paese</span>
+                    <span data-lang="en" style="display: none;">Country</span>
+                </label>
+                <input type="text" class="form-control" id="country" name="country" value="{{ recipient.country|default_if_none:'Italia' }}">
+            </div>
+            <div class="col-md-6">
+                <label for="phone" class="form-label">
+                    <span data-lang="it">Telefono (Opzionale)</span>
+                    <span data-lang="en" style="display: none;">Phone (Optional)</span>
+                </label>
+                <input type="text" class="form-control" id="phone" name="phone" value="{{ recipient.phone|default_if_none:'' }}">
+            </div>
+            <div class="col-md-6">
+                <label for="email" class="form-label">Email (Opzionale)</label>
+                <input type="email" class="form-control" id="email" name="email" value="{{ recipient.email|default_if_none:'' }}">
+            </div>
+            <div class="col-12">
+                <label for="vat_number" class="form-label">
+                    <span data-lang="it">Partita IVA / Codice Fiscale (Opzionale)</span>
+                    <span data-lang="en" style="display: none;">VAT Number / Tax Code (Optional)</span>
+                </label>
+                <input type="text" class="form-control" id="vat_number" name="vat_number" value="{{ recipient.vat_number|default_if_none:'' }}">
+            </div>
+        </div>
+        <div class="form-actions mt-4 d-flex justify-content-end">
+            <a href="{% url 'recipient_list' %}" class="btn btn-secondary me-2">
+                <span data-lang="it">Annulla</span>
+                <span data-lang="en" style="display: none;">Cancel</span>
+            </a>
+            <button type="submit" class="btn btn-primary">
+                {% if is_edit %}
+                    <span data-lang="it">Salva Modifiche</span>
+                    <span data-lang="en" style="display: none;">Save Changes</span>
+                {% else %}
+                    <span data-lang="it">Salva Destinatario</span>
+                    <span data-lang="en" style="display: none;">Save Recipient</span>
+                {% endif %}
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock user_content %}

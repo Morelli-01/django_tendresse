@@ -1,0 +1,760 @@
+:root {
+	--color-background: #fdfbf8;
+	--color-text: #333333;
+	--color-heading: #1a1a1a;
+	--color-primary: #4682b4;
+	--color-primary-darker: #596773;
+	--font-primary: "Playfair Display", serif;
+	--font-secondary: "Roboto", sans-serif;
+}
+
+body {
+	font-family: "Roboto", sans-serif;
+	padding-top: 80px;
+	background-color: var(--color-background);
+	color: var(--color-text);
+	overflow-x: hidden;
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
+}
+
+.profile-section {
+	padding: 100px 0;
+}
+
+/* --- Hero Section --- */
+/* --- Hero Section --- */
+.hero {
+	height: 100vh;
+	min-height: 600px; /* Ensure minimum height */
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	text-align: center;
+	color: white;
+	overflow: hidden; /* Prevent content overflow */
+}
+
+.hero::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: rgba(0, 0, 0, 0.1);
+	z-index: 1;
+}
+
+.hero-background {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	animation: kenburns 20s ease-out infinite;
+	transform-origin: center center;
+}
+
+@keyframes kenburns {
+	0% {
+		transform: scale(1);
+	}
+	50% {
+		transform: scale(1.1);
+	}
+	100% {
+		transform: scale(1);
+	}
+}
+
+.hero .container {
+	position: relative;
+	z-index: 2;
+	text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+	padding: 0 20px; /* Add horizontal padding */
+	max-width: 100%;
+}
+
+.hero h1 {
+	font-family: var(--font-primary);
+	font-size: 5rem;
+	font-weight: 700;
+	letter-spacing: 1px;
+	margin-bottom: 1rem;
+	line-height: 1.1; /* Improve line spacing */
+}
+
+.hero p {
+	font-size: 1.5rem;
+	font-weight: 300;
+	max-width: 800px;
+	margin: 20px auto 0;
+	font-style: italic;
+	font-family: var(--font-primary);
+	line-height: 1.4;
+}
+
+/* Mobile optimizations for hero section */
+@media (max-width: 768px) {
+	.hero {
+		height: 100vh;
+		min-height: 500px; /* Smaller minimum height on mobile */
+		/* Disable ken burns animation on mobile for better performance */
+	}
+	
+	.hero-background {
+		animation: none; /* Disable animation on mobile */
+		transform: scale(1.05); /* Slight scale to prevent white edges */
+	}
+	
+	.hero .container {
+		padding: 0 15px;
+	}
+	
+	.hero h1 {
+		font-size: 2.8rem; /* Significantly smaller on mobile */
+		letter-spacing: 0.5px;
+		margin-bottom: 1rem;
+		line-height: 1.1;
+	}
+	
+	.hero p {
+		font-size: 1.1rem; /* Smaller subtitle text */
+		margin: 15px auto 0;
+		line-height: 1.4;
+		max-width: 90%; /* Prevent text from hitting edges */
+	}
+}
+
+@media (max-width: 576px) {
+	.hero {
+		min-height: 450px; /* Even smaller on very small screens */
+	}
+	
+	.hero h1 {
+		font-size: 2.2rem; /* Even smaller for tiny screens */
+		line-height: 1.2;
+	}
+	
+	.hero p {
+		font-size: 1rem;
+		margin: 10px auto 0;
+		max-width: 95%;
+	}
+}
+
+/* Fix for mobile browser viewport issues */
+@supports (-webkit-touch-callout: none) {
+	.hero {
+		/* Use dvh (dynamic viewport height) if supported, fallback to vh */
+		height: 100dvh;
+		min-height: -webkit-fill-available;
+	}
+}
+
+/* Landscape orientation on mobile */
+@media (max-height: 500px) and (orientation: landscape) {
+	.hero {
+		height: 100vh;
+		min-height: 400px;
+	}
+	
+	.hero h1 {
+		font-size: 2rem;
+		margin-bottom: 0.5rem;
+	}
+	
+	.hero p {
+		font-size: 0.9rem;
+		margin: 8px auto 0;
+	}
+}
+
+/* --- General Section Styling --- */
+.section {
+	padding: 100px 0;
+}
+
+.section-title {
+	font-family: var(--font-primary);
+	font-size: 3rem;
+	font-weight: 700;
+	color: var(--color-heading);
+	margin-bottom: 20px;
+	position: relative;
+	display: inline-block;
+}
+
+.section-title::after {
+	content: "";
+	display: block;
+	width: 60%;
+	height: 3px;
+	background-color: var(--color-primary);
+	margin-top: 15px;
+}
+
+.text-start .section-title::after {
+	margin-left: 0;
+}
+
+.section p {
+	font-size: 1.1rem;
+	line-height: 1.8;
+}
+
+/* --- Content Sections --- */
+.content-image-wrapper {
+	position: relative;
+	border-radius: 10px;
+	box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+	overflow: hidden;
+}
+
+.carousel.slide {
+	border-radius: 10px;
+}
+
+/* --- CTA Section --- */
+.cta-section {
+	background-color: var(--color-heading);
+	color: var(--color-background);
+	padding: 80px 0;
+}
+
+.cta-section .section-title {
+	color: white;
+}
+
+.cta-section .section-title::after {
+	background-color: var(--color-primary);
+}
+
+.cta-section .lead {
+	color: rgba(255, 255, 255, 0.8);
+	margin-bottom: 30px;
+}
+
+.btn-custom {
+	background-color: var(--color-primary);
+	border-color: var(--color-primary);
+	color: white;
+	padding: 12px 30px;
+	font-weight: 500;
+	text-transform: uppercase;
+	letter-spacing: 1px;
+	border-radius: 50px;
+	transition: all 0.3s ease;
+}
+
+.btn-custom:hover {
+	background-color: var(--color-primary-darker);
+	border-color: var(--color-primary-darker);
+	color: white;
+	transform: translateY(-3px);
+	box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* --- Contact Page Styling --- */
+.page-header {
+	padding-top: 150px;
+	padding-bottom: 80px;
+	text-align: center;
+}
+
+.page-header .section-title {
+	font-size: 3.5rem;
+}
+
+.contact-card {
+	background-color: white;
+	border: 0;
+	border-radius: 10px;
+	box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+	padding: 2rem;
+	text-align: center;
+	height: 100%;
+	transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.contact-card:hover {
+	transform: translateY(-5px);
+	box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+}
+
+.card-icon {
+	font-size: 2.5rem;
+	color: var(--color-primary);
+}
+
+.contact-card .card-title {
+	font-family: var(--font-primary);
+	font-weight: 700;
+	color: var(--color-heading);
+}
+
+.contact-card .list-unstyled li {
+	margin-bottom: 0.5rem;
+}
+
+.contact-card a {
+	text-decoration: none;
+	color: var(--color-text);
+	transition: color 0.3s;
+}
+
+.contact-card a:hover {
+	color: var(--color-primary);
+}
+
+/* --- Contact Form Styling --- */
+.form-wrapper {
+	background-color: white;
+	padding: 3rem;
+	border-radius: 10px;
+	box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+}
+
+.form-control {
+	border: 1px solid #ddd;
+	padding: 0.85rem 1rem;
+	border-radius: 5px;
+}
+
+.form-control:focus {
+	border-color: var(--color-primary);
+	box-shadow: 0 0 0 0.25rem rgba(210, 180, 140, 0.25);
+}
+
+.btn-custom {
+	background-color: var(--color-primary);
+	border-color: var(--color-primary);
+	color: var(--color-heading);
+	padding: 12px 30px;
+	font-weight: 500;
+	text-transform: uppercase;
+	letter-spacing: 1px;
+	border-radius: 50px;
+	transition: all 0.3s ease;
+}
+
+.btn-custom:hover {
+	background-color: #c5a677;
+	border-color: #c5a677;
+	color: var(--color-heading);
+	transform: translateY(-3px);
+	box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.map-container {
+	height: 450px;
+	border-radius: 10px;
+	overflow: hidden;
+	box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+}
+
+/* --- Instagram Page Styling --- */
+.section {
+	padding: 80px 0;
+}
+
+.section-title {
+	font-family: "Playfair Display", serif;
+	font-size: 2.5rem;
+	font-weight: 700;
+	margin-bottom: 40px;
+	text-align: center;
+}
+
+/* --- Login Page Styling --- */
+.login-container {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 40px 0;
+}
+
+.login-form-card {
+	background-color: #fff;
+	padding: 40px;
+	border-radius: 10px;
+	box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+	max-width: 450px;
+	width: 100%;
+}
+
+.login-form-card h2 {
+	font-family: "Playfair Display", serif;
+	color: #333;
+	margin-bottom: 30px;
+	text-align: center;
+	font-size: 2.2rem;
+}
+
+.form-label {
+	font-weight: 500;
+	color: #555;
+}
+
+.btn-primary, .btn-secondary {
+	background-color: #4682b4;
+	border-color: #6a7a89;
+	padding: 10px 20px;
+	font-weight: 600;
+	border-radius: 5px;
+	transition: all 0.3s ease;
+}
+
+.btn-secondary {
+	background-color: gray;
+	border-color: gray;
+}
+
+.btn-primary:hover {
+	background-color: #4682b4;
+	border-color: #596773;
+	transform: translateY(-2px);
+	box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* --- Navbar & Footer Common Styling --- */
+.navbar-nav .fa-user-circle,
+.navbar-nav .fa-globe {
+	font-size: 1.25rem;
+}
+
+.dropdown-menu {
+    border: none;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.main-footer {
+	background-color: #1a1a1a;
+	color: rgba(255, 255, 255, 0.7);
+	padding: 50px 0;
+	font-family: "Roboto", sans-serif;
+}
+
+.footer-title {
+	font-family: "Playfair Display", serif;
+	color: white;
+	font-weight: 700;
+	margin-bottom: 10px;
+}
+
+.footer-subtitle {
+	color: rgba(255, 255, 255, 0.5);
+	font-size: 0.9rem;
+	margin-bottom: 0;
+}
+
+.social-icons .social-icon {
+    font-size: 1.5rem;
+    color: #fff;
+    margin-right: 15px;
+    transition: color 0.3s, transform 0.3s;
+}
+
+.social-icons .social-icon:hover {
+    color: #e8d5c4;
+    transform: scale(1.2);
+}
+
+.newsletter-form .form-control {
+    border-radius: 50px 0 0 50px;
+    border: none;
+}
+
+.newsletter-form .btn {
+    border-radius: 0 50px 50px 0;
+}
+
+.main-footer a {
+    color: #e8d5c4;
+    text-decoration: none;
+}
+
+.main-footer a:hover {
+    text-decoration: underline;
+}
+
+.social-icon {
+	color: rgba(255, 255, 255, 0.7);
+	font-size: 1.5rem;
+	transition: color 0.3s ease, transform 0.3s ease;
+}
+
+.social-icon:hover {
+	color: #4682b4;
+	transform: scale(1.1);
+}
+
+/* --- User Area Specific Styles --- */
+.user-area-layout {
+	display: flex;
+	min-height: calc(100vh - 80px); /* Adjust for fixed navbar */
+}
+
+.sidebar {
+	width: 250px;
+	background-color: #f8f9fa; /* Light background for sidebar */
+	padding: 20px;
+	border-right: 1px solid #e9ecef;
+	flex-shrink: 0;
+}
+
+.sidebar-heading {
+	font-family: var(--font-primary);
+	font-size: 1.8rem;
+	color: var(--color-heading);
+	margin-bottom: 25px;
+}
+
+.sidebar-nav .nav-link {
+	font-size: 1.1rem;
+	padding: 10px 15px;
+	margin-bottom: 5px;
+	border-radius: 8px;
+	color: var(--color-text);
+	transition: all 0.2s ease;
+}
+
+.sidebar-nav .nav-link:hover,
+.sidebar-nav .nav-link.active {
+	background-color: var(--color-primary);
+	color: white;
+}
+
+.user-content {
+	flex-grow: 1;
+	padding: 30px;
+	background-color: var(--color-background);
+}
+
+.dashboard-header {
+	font-family: var(--font-primary);
+	font-size: 2.5rem;
+	color: var(--color-heading);
+	margin-bottom: 30px;
+}
+
+.table-responsive {
+	border-radius: 10px;
+	overflow: hidden;
+	box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+}
+
+.table-slips,
+.table-recipient {
+	width: 100%;
+	margin-bottom: 0;
+	border-collapse: separate;
+	border-spacing: 0 10px; /* Space between rows */
+}
+
+.table-recipient thead th,
+.table-slips thead th {
+	background-color: var(--color-primary);
+	color: white;
+	padding: 15px;
+	border-bottom: none;
+	font-weight: 500;
+}
+
+.table-recipient tbody tr,
+.table-slips tbody tr {
+	background-color: white;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+	transition: transform 0.2s ease;
+}
+
+.table-recipient tbody tr,
+.table-slips tbody tr:hover {
+	transform: translateY(-3px);
+	box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.table-recipient tbody tr:first-child,
+.table-slips tbody tr:first-child {
+	border-top-left-radius: 10px;
+	border-top-right-radius: 10px;
+}
+
+.table-recipient tbody tr:last-child .table-slips tbody tr:last-child {
+	border-bottom-left-radius: 10px;
+	border-bottom-right-radius: 10px;
+}
+
+.table-recipient .btn,
+.table-slips .btn {
+	padding: 5px 10px;
+	font-size: 0.9rem;
+	margin-right: 5px;
+}
+
+/* Form Styles for Create/Edit Slip and Recipient */
+.form-card {
+	background-color: white;
+	padding: 30px;
+	border-radius: 10px;
+	box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+}
+
+.form-card .form-label {
+	font-weight: 500;
+	color: #555;
+	margin-bottom: 8px;
+}
+
+.form-card .form-control,
+.form-card .form-select,
+.form-card .input-group-text {
+	border-radius: 5px;
+	border: 1px solid #ced4da;
+	padding: 0.75rem 1rem;
+}
+
+.form-card .form-control:focus,
+.form-card .form-select:focus {
+	border-color: var(--color-primary);
+	box-shadow: 0 0 0 0.25rem rgba(70, 130, 180, 0.25);
+}
+
+.form-actions {
+	margin-top: 30px;
+	text-align: right;
+}
+
+.form-actions .btn {
+	min-width: 120px;
+}
+/* Custom style for more prominent error alerts */
+.alert {
+	font-weight: bold;
+	border: 2px solid;
+	box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15); /* Add shadow to lift it from the page */
+}
+
+.alert.alert-error {
+	border-color: #dc3545; /* Darker red border for visibility */
+	background-color: #f8d7da; /* Light red background */
+	color: #721c24; /* Dark red text */
+	animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; /* Subtle shake animation */
+	transform: translate3d(0, 0, 0);
+	backface-visibility: hidden;
+	perspective: 1000px;
+}
+
+.alert.alert-success {
+	border-color: #28a745; /* Green border */
+	background-color: #d4edda; /* Light green background */
+	color: #155724; /* Dark green text */
+}
+
+.alert.alert-info {
+	border-color: #17a2b8; /* Blue border */
+	background-color: #d1ecf1; /* Light blue background */
+	color: #0c5460; /* Dark blue text */
+}
+
+/* Keyframes for the shake animation */
+@keyframes shake {
+	10%,
+	90% {
+		transform: translate3d(-1px, 0, 0);
+	}
+	20%,
+	80% {
+		transform: translate3d(2px, 0, 0);
+	}
+	30%,
+	50%,
+	70% {
+		transform: translate3d(-4px, 0, 0);
+	}
+	40%,
+	60% {
+		transform: translate3d(4px, 0, 0);
+	}
+}
+/* Responsive adjustments */
+@media (max-width: 768px) {
+	.user-area-layout {
+		flex-direction: column;
+	}
+	.sidebar {
+		width: 100%;
+		border-right: none;
+		border-bottom: 1px solid #e9ecef;
+	}
+	.user-content {
+		padding: 20px 15px;
+	}
+	.sidebar-nav {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+	}
+	.sidebar-nav .nav-item {
+		flex: 1 1 auto; /* Allow items to grow/shrink */
+		text-align: center;
+	}
+	.sidebar-nav .nav-link {
+		margin: 5px;
+		padding: 8px 10px;
+	}
+	.dashboard-header {
+		font-size: 2rem;
+		text-align: center;
+	}
+
+	.table-recipient thead,
+	.table-slips thead {
+		display: none; /* Hide table headers on small screens */
+	}
+
+	.table-recipient tbody tr,
+	.table-slips tbody tr {
+		display: block;
+		margin-bottom: 15px;
+		border: 1px solid #e9ecef;
+	}
+
+	.table-recipient tbody td,
+	.table-slips tbody td {
+		display: block;
+		text-align: right;
+		padding-left: 50%; /* Make space for pseudo-elements */
+		position: relative;
+	}
+
+	.table-recipient tbody td::before,
+	.table-slips tbody td::before {
+		content: attr(data-label); /* Use data-label for content */
+		position: absolute;
+		left: 10px;
+		width: calc(50% - 20px);
+		padding-right: 10px;
+		text-align: left;
+		font-weight: bold;
+		color: var(--color-heading);
+	}
+}
+
+/* Keyframe Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

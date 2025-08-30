@@ -1,0 +1,179 @@
+{% load static %}
+<script>
+    const langMap = {
+        'it': 'Italiano',
+        'en': 'English'
+    };
+
+    function setCookie(name, value, days) {
+        let expires = "";
+        if (days) {
+            const date = new Date();
+            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+            expires = "; expires=" + date.toUTCString();
+        }
+        document.cookie = name + "=" + (value || "")  + expires + "; path=/";
+    }
+
+    function getCookie(name) {
+        const nameEQ = name + "=";
+        const ca = document.cookie.split(';');
+        for(let i=0; i < ca.length; i++) {
+            let c = ca[i];
+            while (c.charAt(0) === ' ') c = c.substring(1,c.length);
+            if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length,c.length);
+        }
+        return null;
+    }
+
+
+    function switchLanguage(lang) {
+        console.log('switchLanguage function called')
+        document.querySelectorAll('[data-lang]').forEach(el => {
+            if (el.getAttribute('data-lang') === lang) {
+                el.classList.remove('d-none');
+            } else {
+                el.classList.add('d-none');
+            }
+        });
+
+        // Update active class on dropdown items
+        document.querySelectorAll('#languageDropdown + .dropdown-menu .dropdown-item').forEach(item => {
+            if (item.getAttribute('data-lang-code') === lang) {
+                item.classList.add('active');
+            } else {
+                item.classList.remove('active');
+            }
+        });
+
+        // Update the main dropdown display
+        document.getElementById('current-language-display').textContent = langMap[lang];
+
+        // Save the language choice to a cookie
+        console.log('i am saving cookie' + lang)
+        setCookie('user_language', lang, 365);
+
+        document.querySelectorAll('[data-lang]').forEach(el => {
+            if (el.getAttribute('data-lang') === lang) {
+                el.style.display = '';
+            } else {
+                el.style.display = 'none';
+            }
+        });
+        document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+            const tooltipText = el.getAttribute(`data-tooltip-${lang}`);
+            if (tooltipText) {
+                el.setAttribute('title', tooltipText);
+                // Refresh the tooltip if it's already initialized
+                const tooltipInstance = bootstrap.Tooltip.getInstance(el);
+                if (tooltipInstance) {
+                    tooltipInstance.dispose();
+                    new bootstrap.Tooltip(el);
+                }
+            }
+        });
+        document.querySelectorAll('option[data-text-' + lang + ']').forEach(option => {
+            const text = option.getAttribute('data-text-' + lang);
+            if (text) {
+                option.textContent = text;
+            }
+        });
+
+    }
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        // Read the language from the cookie on page load
+        const savedLang = getCookie('user_language') || 'it';
+        switchLanguage(savedLang);
+    });
+</script>
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/">
+            <img src="{% static 'images/logo.svg' %}" alt="Tendresse Logo" style="height: 40px;">
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link {% if request.path == '/' %}active{% endif %}"
+                       {% if request.path == '/' %}aria-current="page"{% endif %}
+                       href="/">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.path == '/collections/' %}active{% endif %}"
+                       {% if request.path == '/collections/' %}aria-current="page"{% endif %}
+                       href="/collections/">
+                        <span data-lang="it">Collezioni</span>
+                        <span data-lang="en" class="d-none">Collections</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.path == '/contact/' %}active{% endif %}"
+                       {% if request.path == '/contact/' %}aria-current="page"{% endif %}
+                       href="/contact/">
+                        <span data-lang="it">Contatti</span>
+                        <span data-lang="en" class="d-none">Contact</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.path == '/instagram/' %}active{% endif %}"
+                       {% if request.path == '/instagram/' %}aria-current="page"{% endif %}
+                       href="/instagram/">Instagram</a>
+                </li>
+            </ul>
+
+            <ul class="navbar-nav ms-auto">
+                {% if user.is_authenticated %}
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="profileDropdown" role="button"
+                       data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-user-circle"></i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
+                        <li>
+                            <a class="dropdown-item" href="{% url 'dashboard' %}">
+                                <span data-lang="it">La mia Dashboard</span>
+                                <span data-lang="en" class="d-none">My Dashboard</span>
+                            </a>
+                        </li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="/logout/">
+                                <span data-lang="it">Esci</span>
+                                <span data-lang="en" class="d-none">Logout</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                {% else %}
+                <li class="nav-item">
+                    <a class="nav-link {% if request.path == '/login/' %}active{% endif %}"
+                       {% if request.path == '/login/' %}aria-current="page"{% endif %}
+                       href="/login/">
+                        <span data-lang="it">Accedi</span>
+                        <span data-lang="en" class="d-none">Login</span>
+                    </a>
+                </li>
+                {% endif %}
+
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="languageDropdown" role="button"
+                       data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-globe"></i> <span id="current-language-display"></span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown">
+                        <li><a class="dropdown-item" href="#" data-lang-code="it" onclick="switchLanguage('it')">Italiano</a></li>
+                        <li><a class="dropdown-item" href="#" data-lang-code="en" onclick="switchLanguage('en')">English</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>

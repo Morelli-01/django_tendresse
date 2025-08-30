@@ -1,0 +1,267 @@
+{% extends 'user_profile/user_area_base.html' %}
+{% load static %}
+
+{% block user_content %}
+<style>
+    /* Hide the tooltip text spans from the page content */
+    .tooltip-text {
+        display: none !important;
+    }
+    
+    /* Highlight search matches */
+    .search-highlight {
+        background-color: yellow;
+        font-weight: bold;
+    }
+    
+    /* Fade out filtered rows */
+    .filtered-out {
+        opacity: 0.3;
+        transition: opacity 0.3s ease;
+    }
+    
+    /* Search stats styling */
+    .search-stats {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+</style>
+
+<h1 class="dashboard-header mb-4" data-aos="fade-up">
+    <span data-lang="it">Gestione Destinatari</span>
+    <span data-lang="en" class="d-none">Recipient Management</span>
+</h1>
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3" data-aos="fade-up" data-aos-delay="100">
+    <a href="{% url 'add_recipient' %}" class="btn btn-success">
+        <i class="fas fa-plus me-2"></i>
+        <span data-lang="it">Aggiungi</span>
+        <span data-lang="en" class="d-none">Add</span>
+    </a>
+    
+    <!-- Real-time Search Bar -->
+    <div class="search-container flex-grow-1 flex-md-grow-0">
+        <div class="d-flex flex-column" style="min-width: 300px;">
+            <div class="input-group">
+                <input type="text" 
+                       id="realTimeSearch"
+                       class="form-control" 
+                       data-text-it="Filtra destinatari..." 
+                       data-text-en="Filter recipients..."
+                       placeholder="Filtra destinatari...">
+                <button class="btn btn-outline-secondary" type="button" id="clearSearch">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="searchStats" class="search-stats mt-1">
+                <span data-lang="it">Mostrando <span id="visibleCount">{{ recipients.count }}</span> di <span id="totalCount">{{ recipients.count }}</span> destinatari</span>
+                <span data-lang="en" class="d-none">Showing <span id="visibleCountEn">{{ recipients.count }}</span> of <span id="totalCountEn">{{ recipients.count }}</span> recipients</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if recipients %}
+<div class="table-responsive" data-aos="fade-up" data-aos-delay="200">
+    <table class="table table-hover table-striped align-middle table-recipient" id="recipientsTable">
+        <thead class="table-dark">
+            <tr>
+                <th><span data-lang="it">Nome</span><span data-lang="en" class="d-none">Name</span></th>
+                <th><span data-lang="it">Città</span><span data-lang="en" class="d-none">City</span></th>
+                <th><span data-lang="it">Provincia</span><span data-lang="en" class="d-none">Province</span></th>
+                <th><span data-lang="it">Paese</span><span data-lang="en" class="d-none">Country</span></th>
+                <th><span data-lang="it">Azioni</span><span data-lang="en" class="d-none">Actions</span></th>
+            </tr>
+        </thead>
+        <tbody id="recipientsTableBody">
+            {% for recipient in recipients %}
+            <tr class="recipient-row" data-searchable="{{ recipient.company_name }} {{ recipient.city }} {{ recipient.province_sigla }} {{ recipient.country }}">
+                <td data-label="Nome:" class="searchable-cell">{{ recipient.company_name }}</td>
+                <td data-label="Città:" class="searchable-cell">{{ recipient.city }}</td>
+                <td data-label="Provincia:" class="searchable-cell">{{ recipient.province_sigla }}</td>
+                <td data-label="Paese:" class="searchable-cell">{{ recipient.country }}</td>
+                <td>
+                    <div class="btn-group" role="group">
+                        <a href="{% url 'edit_recipient' recipient.pk %}" class="btn btn-sm btn-info text-white"
+                           data-bs-toggle="tooltip" data-bs-placement="top" title=""
+                           data-tooltip-en="Edit"
+                           data-tooltip-it="Modifica"
+                           style="background-color: #5D9CEC; border-radius: 5px;border-color:#5D9CEC;">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <form action="{% url 'delete_recipient' recipient.pk %}" method="post" class="d-inline-block"
+                              onsubmit="return confirm('Sei sicuro di voler eliminare questo destinatario?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-danger" data-bs-toggle="tooltip" data-bs-placement="top" title=""
+                                    data-tooltip-en="Delete"
+                                    data-tooltip-it="Elimina"
+                                    style="background-color: #E74C3C; border-color:#E74C3C;">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- No results message (hidden by default) -->
+<div id="noResultsMessage" class="alert alert-info text-center mt-5 d-none" role="alert">
+    <h4 class="alert-heading">
+        <i class="fas fa-search me-2"></i>
+        <span data-lang="it">Nessun Destinatario Trovato!</span>
+        <span data-lang="en" class="d-none">No Recipients Found!</span>
+    </h4>
+    <p>
+        <span data-lang="it">Nessun destinatario corrisponde ai criteri di ricerca. Prova a modificare il filtro.</span>
+        <span data-lang="en" class="d-none">No recipients match your search criteria. Try modifying your filter.</span>
+    </p>
+</div>
+
+{% else %}
+<div class="alert alert-info text-center mt-5" role="alert" data-aos="fade-up" data-aos-delay="100">
+    <h4 class="alert-heading">
+        <span data-lang="it">Nessun Destinatario Trovato!</span>
+        <span data-lang="en" class="d-none">No Recipients Found!</span>
+    </h4>
+    <p>
+        <span data-lang="it">Inizia aggiungendo un destinatario per poter creare le tue bolle di consegna.</span>
+        <span data-lang="en" class="d-none">Start by adding a recipient to be able to create your delivery slips.</span>
+    </p>
+    <hr>
+    <a href="{% url 'add_recipient' %}" class="btn btn-primary">
+        <i class="fas fa-plus me-2"></i>
+        <span data-lang="it">Aggiungi Destinatario</span>
+        <span data-lang="en" class="d-none">Add Recipient</span>
+    </a>
+</div>
+{% endif %}
+{% endblock user_content %}
+
+{% block extra_js %}
+<script>
+    let totalRecipients = 0;
+    let visibleRecipients = 0;
+
+    function highlightText(text, searchTerm) {
+        if (!searchTerm) return text;
+        
+        const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+        return text.replace(regex, '<span class="search-highlight">$1</span>');
+    }
+
+    function removeHighlights() {
+        document.querySelectorAll('.search-highlight').forEach(el => {
+            el.outerHTML = el.innerHTML;
+        });
+    }
+
+    function updateSearchStats() {
+        document.getElementById('visibleCount').textContent = visibleRecipients;
+        document.getElementById('visibleCountEn').textContent = visibleRecipients;
+        document.getElementById('totalCount').textContent = totalRecipients;
+        document.getElementById('totalCountEn').textContent = totalRecipients;
+    }
+
+    function filterTable(searchTerm) {
+        const rows = document.querySelectorAll('.recipient-row');
+        const table = document.getElementById('recipientsTable');
+        const noResultsMessage = document.getElementById('noResultsMessage');
+        
+        // Remove previous highlights
+        removeHighlights();
+        
+        visibleRecipients = 0;
+        
+        if (!searchTerm.trim()) {
+            // Show all rows when search is empty
+            rows.forEach(row => {
+                row.style.display = '';
+                row.classList.remove('filtered-out');
+                visibleRecipients++;
+            });
+            
+            table.style.display = '';
+            noResultsMessage.classList.add('d-none');
+        } else {
+            // Filter rows based on search term
+            const lowerSearchTerm = searchTerm.toLowerCase();
+            
+            rows.forEach(row => {
+                const searchableText = row.getAttribute('data-searchable').toLowerCase();
+                const matches = searchableText.includes(lowerSearchTerm);
+                
+                if (matches) {
+                    row.style.display = '';
+                    row.classList.remove('filtered-out');
+                    visibleRecipients++;
+                    
+                    // Highlight matching text in visible cells
+                    row.querySelectorAll('.searchable-cell').forEach(cell => {
+                        const originalText = cell.textContent;
+                        if (originalText.toLowerCase().includes(lowerSearchTerm)) {
+                            cell.innerHTML = highlightText(originalText, searchTerm);
+                        }
+                    });
+                } else {
+                    row.style.display = 'none';
+                    row.classList.add('filtered-out');
+                }
+            });
+            
+            // Show/hide table and no results message
+            if (visibleRecipients === 0) {
+                table.style.display = 'none';
+                noResultsMessage.classList.remove('d-none');
+            } else {
+                table.style.display = '';
+                noResultsMessage.classList.add('d-none');
+            }
+        }
+        
+        updateSearchStats();
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const savedLang = getCookie('user_language') || 'it';
+        const searchInput = document.getElementById('realTimeSearch');
+        const clearButton = document.getElementById('clearSearch');
+        
+        // Initialize counters
+        totalRecipients = document.querySelectorAll('.recipient-row').length;
+        visibleRecipients = totalRecipients;
+        updateSearchStats();
+        
+        // Update search placeholder text
+        if (searchInput) {
+            const placeholderText = searchInput.getAttribute(`data-text-${savedLang}`);
+            if (placeholderText) {
+                searchInput.setAttribute('placeholder', placeholderText);
+            }
+            
+            // Real-time search as user types
+            searchInput.addEventListener('input', function() {
+                filterTable(this.value);
+            });
+            
+            // Clear search functionality
+            clearButton.addEventListener('click', function() {
+                searchInput.value = '';
+                filterTable('');
+                searchInput.focus();
+            });
+            
+            // Handle Enter key
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    filterTable(this.value);
+                }
+            });
+        }
+
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends 'user_profile/user_area_base.html' %}
+{% load static %}
+
+{% block user_content %}
+<h1 class="dashboard-header text-center" data-aos="fade-up">
+    <span data-lang="it">Benvenuto, {{ user.username }}!</span>
+    <span data-lang="en" style="display: none;">Welcome, {{ user.username }}!</span>
+</h1>
+<p class="lead text-center" data-aos="fade-up" data-aos-delay="100">
+    <span data-lang="it">Questa è la tua area utente. Usa il menu a sinistra per gestire le bolle di consegna e i destinatari.</span>
+    <span data-lang="en" style="display: none;">This is your user area. Use the left menu to manage delivery slips and recipients.</span>
+</p>
+{% endblock user_content %}
