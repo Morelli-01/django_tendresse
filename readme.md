@@ -6,6 +6,14 @@ A Django web application for "Tendresse," a knitwear company. The project featur
 
 The website is live at [https://tendresse.it/](https://tendresse.it/).
 
+## Showcase
+
+Below is a screenshot of the website homepage. Click the image to open the full-size version on GitHub, or visit the live site linked above.
+
+[![Tendresse website homepage](https://raw.githubusercontent.com/Morelli-01/django_tendresse/main/core/static/images/website_home.png)](https://raw.githubusercontent.com/Morelli-01/django_tendresse/main/core/static/images/website_home.png)
+
+Caption: Homepage screenshot (sourced from the repository image `core/static/images/website_home.png`).
+
 ## Features
 
 * **Public Website:** Includes a homepage, contact page, and an Instagram feed integration.
