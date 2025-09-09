@@ -24,6 +24,7 @@ from django.views.generic.base import TemplateView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('home/', RedirectView.as_view(url='/', permanent=True)),
     path('', include('core.urls')),
     path('profile/', include('user_profile.urls')), 
     path('', include('product_collections.urls')), 
