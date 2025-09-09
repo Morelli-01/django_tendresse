@@ -49,6 +49,13 @@
                                 <span data-lang="en" class="d-none">Create New Slip</span>
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'custom_print' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'custom_print' %}">
+                                <i class="fas fa-print me-2"></i>
+                                <span data-lang="it">Stampa Personalizzata</span>
+                                <span data-lang="en" class="d-none">Custom Print</span>
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </aside>

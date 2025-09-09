@@ -12,4 +12,5 @@ urlpatterns = [
     path('recipients/add/', views.add_recipient_view, name='add_recipient'),
     path('recipients/<int:pk>/edit/', views.edit_recipient_view, name='edit_recipient'),
     path('recipients/<int:pk>/delete/', views.delete_recipient_view, name='delete_recipient'),
+    path('custom-print/', views.custom_print_view, name='custom_print'),
 ]   

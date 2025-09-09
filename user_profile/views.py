@@ -8,12 +8,148 @@ import json
 from django.http import HttpResponse
 from datetime import date
 from django.db import IntegrityError
-from django.db.models import Max
+from django.db.models import Max, Q
 from django.conf import settings
 import subprocess
 import tempfile
 import os
+from io import BytesIO
+from PyPDF2 import PdfMerger
+import concurrent.futures
 
+def generate_slip_pdf(slip):
+    """
+    Generates a PDF for a given slip and returns the file path.
+    Returns None if generation fails.
+    """
+    import json
+    import subprocess
+    import tempfile
+    import os
+    from django.conf import settings
+    
+    # Prepare data for JSON
+    items = slip.items or []
+    descrizioni = [item.get("description", "") for item in items]
+    qta = [str(item.get("quantity", "")) for item in items]
+    um = [item.get("unit", "") for item in items]
+    item_notes = [item.get("note", "---") for item in items]
+
+    recipient_data = {
+        "usr": slip.recipient.company_name,
+        "riga1": slip.recipient.address_line1,
+        "riga2": slip.recipient.address_line2 or "",
+        "citta": slip.recipient.city,
+        "prov": slip.recipient.province_sigla or "",
+        "cap": slip.recipient.postal_code,
+        "paese": slip.recipient.country,
+    }
+
+    same_address = not slip.different_address
+    dst2_data = []
+    if not same_address:
+        addr = slip.different_address
+        dst2_data = [
+            addr.get("dest_name", ""),
+            addr.get("dest_address", ""),
+            addr.get("dest_city", ""),
+            addr.get("dest_cap", ""),
+            addr.get("dest_state", ""),
+        ]
+
+    bolla_data = {
+        "data": slip.date.strftime("%d/%m/%Y"),
+        "descrizioni": descrizioni,
+        "qta": qta,
+        "um": um,
+        "note": item_notes,
+        "lavorazione": slip.lavorazione or "",
+        "respSpedizione": slip.resp_spedizione or "",
+        "dataTrasp": slip.data_trasp.strftime("%d/%m/%Y") if slip.data_trasp else "",
+        "aspetto": slip.aspetto or "",
+        "dst": recipient_data,
+        "sameAddress": same_address,
+        "dst2": dst2_data,
+        "number": str(slip.slip_number),
+        "year": str(slip.slip_year),
+    }
+
+    json_string = json.dumps(bolla_data)
+
+    jar_path = os.path.join(
+        settings.BASE_DIR,
+        "core",
+        "static",
+        "programs",
+        "SlipDrawer",
+        "BollaDrawer-1.0-SNAPSHOT.jar",
+    )
+    static_files_path = os.path.join(settings.BASE_DIR, "core", "static")
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        command = ["java", "-jar", jar_path, json_string, temp_dir, static_files_path]
+
+        try:
+            result = subprocess.run(command, check=True, capture_output=True, text=True)
+        except subprocess.CalledProcessError as e:
+            print(f"Error generating PDF for slip {slip.full_slip_number}: {e.stderr}")
+            return None
+
+        # Log stdout/stderr for debugging
+        if result.stdout:
+            print(result.stdout)
+        if result.stderr:
+            print(result.stderr)
+
+        # Search for the generated PDF
+        found_pdf = None
+
+        # Prepare candidate filenames to match (handle variants like '/' vs '-')
+        normalized_full = str(slip.full_slip_number).replace("/", "-")
+        candidates = {
+            f"{slip.full_slip_number}.pdf",
+            f"{normalized_full}.pdf",
+            f"{slip.slip_number}-{slip.slip_year}.pdf",
+            f"{slip.slip_number}_{slip.slip_year}.pdf",
+            f"{slip.slip_number}.{slip.slip_year}.pdf",
+        }
+
+        for root, dirs, files in os.walk(temp_dir):
+            for fname in files:
+                if not fname.lower().endswith(".pdf"):
+                    continue
+                full_path = os.path.join(root, fname)
+                # Exact candidate match or contains both number and year
+                if fname in candidates or (
+                    str(slip.slip_number) in fname and str(slip.slip_year) in fname
+                ):
+                    found_pdf = full_path
+                    break
+            if found_pdf:
+                break
+
+        if found_pdf and os.path.exists(found_pdf):
+            # Read the PDF content and return it as bytes
+            with open(found_pdf, "rb") as f:
+                pdf_content = f.read()
+            return pdf_content
+        else:
+            # Collect generated PDFs (if any) for diagnostics
+            generated_pdfs = []
+            for root, dirs, files in os.walk(temp_dir):
+                for fname in files:
+                    if fname.lower().endswith(".pdf"):
+                        generated_pdfs.append(os.path.join(root, fname))
+
+            print(f"PDF not found for slip {slip.full_slip_number}")
+            if result.stdout:
+                print(f"Stdout: {result.stdout}")
+            if result.stderr:
+                print(f"Stderr: {result.stderr}")
+            if generated_pdfs:
+                print(f"Generated PDFs found: {generated_pdfs}")
+
+            return None
 
 @login_required
 def profile_view(request):
@@ -464,3 +600,77 @@ def delete_recipient_view(request, pk):
         recipient.delete()
         messages.success(request, "Destinatario eliminato con successo.")
     return redirect("recipient_list")
+
+
+@login_required
+def custom_print_view(request):
+    if request.method == "POST":
+        selected_slips_str = request.POST.get("selected_slips")
+        print(selected_slips_str)
+        print(request.POST)
+        if not selected_slips_str:
+            messages.error(request, "Nessuna bolla selezionata.")
+            return redirect("custom_print")
+
+        selected_ids = [int(pk) for pk in selected_slips_str.split(",")]
+        slips_to_print = [get_object_or_404(Slip, pk=pk) for pk in selected_ids]
+        print(f"Slips to print: {slips_to_print}")
+
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = [executor.submit(generate_slip_pdf, slip) for slip in slips_to_print]
+
+        merger = PdfMerger(strict=False)
+        successful_merges = 0
+
+        for i, future in enumerate(futures):
+            slip = slips_to_print[i]
+            pdf_content = future.result()
+            if pdf_content:
+                try:
+                    pdf_buffer = BytesIO(pdf_content)
+                    pdf_buffer.seek(0)
+                    merger.append(pdf_buffer)
+                    successful_merges += 1
+                    print(f"Successfully added PDF for slip {slip.full_slip_number}")
+                except Exception as e:
+                    print(f"Error adding PDF for slip {slip.full_slip_number}: {e}")
+                    messages.warning(request, f"Impossibile aggiungere il PDF per la bolla {slip.full_slip_number}.")
+            else:
+                print(f"Failed to generate PDF for slip {slip.full_slip_number}")
+                messages.warning(request, f"Impossibile generare il PDF per la bolla {slip.full_slip_number}.")
+
+        if successful_merges > 0:
+            try:
+                output_pdf = BytesIO()
+                merger.write(output_pdf)
+                merger.close()
+                
+                # Reset buffer position to beginning
+                output_pdf.seek(0)
+                pdf_data = output_pdf.getvalue()
+                
+                # Check if we actually have PDF data
+                if len(pdf_data) > 0:
+                    response = HttpResponse(pdf_data, content_type="application/pdf")
+                    response["Content-Disposition"] = 'attachment; filename="bolle_selezionate.pdf"'
+                    return response
+                else:
+                    messages.error(request, "Il PDF generato è vuoto.")
+                    return redirect("custom_print")
+                    
+            except Exception as e:
+                print(f"Error creating merged PDF: {e}")
+                messages.error(request, f"Errore durante la creazione del PDF unito: {e}")
+                return redirect("custom_print")
+        else:
+            messages.error(request, "Nessun PDF è stato generato.")
+            return redirect("custom_print")
+
+    slips = Slip.objects.all().order_by("-date", "-slip_number")
+    
+    context = {
+        "page_title": "Stampa Personalizzata",
+        "slips": slips,
+        "form_data": request.GET,
+    }
+    return render(request, "user_profile/custom_print.html", context)

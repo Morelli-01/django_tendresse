@@ -1,0 +1,269 @@
+{% extends 'user_profile/user_area_base.html' %}
+{% load static %}
+
+{% block user_content %}
+<style>
+    /* Styles from dashboard.html */
+    .tooltip-text { display: none !important; }
+    .search-highlight { background-color: yellow; font-weight: bold; }
+    .filtered-out { opacity: 0.3; transition: opacity 0.3s ease; }
+    .search-stats { font-size: 0.9rem; color: #6c757d; }
+    @media (max-width: 1199px) {
+        .table-slips .hide-md { display: none !important; }
+        .table-slips .btn-group .btn { padding: 4px 8px; font-size: 0.8rem; }
+        .table-slips .btn-group .btn i { font-size: 0.9rem; }
+    }
+    @media (max-width: 991px) {
+        .table-slips .hide-sm { display: none !important; }
+        .table-slips .btn-group { flex-direction: column; gap: 2px; }
+        .table-slips .btn-group .btn { width: 100%; margin: 0; }
+    }
+    @media (max-width: 768px) {
+        .table-slips thead { display: none; }
+        .table-slips tbody tr { display: block; margin-bottom: 15px; border: 1px solid #e9ecef; border-radius: 8px; padding: 10px; }
+        .table-slips tbody td { display: block; text-align: right; padding: 8px 0; border: none; position: relative; padding-left: 50%; }
+        .table-slips tbody td::before { content: attr(data-label); position: absolute; left: 10px; width: calc(50% - 20px); padding-right: 10px; text-align: left; font-weight: bold; color: var(--color-heading); }
+        .table-slips .btn-group { flex-direction: row; justify-content: flex-end; gap: 5px; }
+        .table-slips .btn-group .btn { width: auto; padding: 6px 10px; font-size: 0.85rem; }
+    }
+</style>
+
+<h1 class="dashboard-header mb-4" data-aos="fade-up">
+    <span data-lang="it">Stampa Personalizzata</span>
+    <span data-lang="en" class="d-none">Custom Print</span>
+</h1>
+
+<div class="card shadow-sm mb-4" data-aos="fade-up" data-aos-delay="100">
+    <div class="card-body">
+        <h5 class="card-title">Filtra per intervallo di bolle</h5>
+        <div class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label for="start_slip_number" class="form-label">Da Bolla Numero</label>
+                <input type="number" class="form-control" id="start_slip_number">
+            </div>
+            <div class="col-md-2">
+                <label for="start_slip_year" class="form-label">Anno</label>
+                <input type="number" class="form-control" id="start_slip_year">
+            </div>
+            <div class="col-md-3">
+                <label for="end_slip_number" class="form-label">A Bolla Numero</label>
+                <input type="number" class="form-control" id="end_slip_number">
+            </div>
+            <div class="col-md-2">
+                <label for="end_slip_year" class="form-label">Anno</label>
+                <input type="number" class="form-control" id="end_slip_year">
+            </div>
+            <div class="col-md-2">
+                <button type="button" id="filter-button" class="btn btn-primary w-100">Filtra</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
+    <div class="d-flex align-items-center gap-3" data-aos="fade-up" data-aos-delay="100">
+        <button id="print-selected" class="btn btn-success">
+            <i class="fas fa-print me-2"></i>
+            Stampa Selezionate
+        </button>
+        <span id="selected-count" class="fw-bold">0 bolle selezionate</span>
+    </div>
+    
+    <div class="search-container flex-grow-1 flex-md-grow-0" data-aos="fade-up" data-aos-delay="100">
+        <div class="d-flex flex-column" style="min-width: 300px;">
+            <div class="input-group">
+                <input type="text" 
+                       id="realTimeSearch"
+                       class="form-control" 
+                       data-text-it="Filtra bolle..." 
+                       data-text-en="Filter slips..."
+                       placeholder="Filtra bolle...">
+                <button class="btn btn-outline-secondary" type="button" id="clearSearch">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="searchStats" class="search-stats mt-1">
+                <span data-lang="it">Mostrando <span id="visibleCount">{{ slips.count }}</span> di <span id="totalCount">{{ slips.count }}</span> bolle</span>
+                <span data-lang="en" class="d-none">Showing <span id="visibleCountEn">{{ slips.count }}</span> of <span id="totalCountEn">{{ slips.count }}</span> slips</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if slips %}
+<div class="table-responsive" data-aos="fade-up" data-aos-delay="200">
+    <table class="table table-hover table-striped table-slips align-middle" id="slipsTable">
+        <thead class="table-dark">
+            <tr>
+                <th><input type="checkbox" id="select-all"></th>
+                <th><span data-lang="it">Numero Bolla</span><span data-lang="en" class="d-none">Slip Number</span></th>
+                <th><span data-lang="it">Data</span><span data-lang="en" class="d-none">Date</span></th>
+                <th class="hide-md"><span data-lang="it">Destinatario</span><span data-lang="en" class="d-none">Recipient</span></th>
+                <th><span data-lang="it">Azioni</span><span data-lang="en" class="d-none">Actions</span></th>
+            </tr>
+        </thead>
+        <tbody id="slipsTableBody">
+            {% for slip in slips %}
+            <tr class="slip-row" data-slip-number="{{ slip.slip_number }}" data-slip-year="{{ slip.slip_year }}" data-searchable="{{ slip.full_slip_number }} {{ slip.date|date:'d/m/Y' }} {{ slip.recipient.company_name }}">
+                <td><input type="checkbox" class="slip-checkbox" value="{{ slip.pk }}"></td>
+                <td data-label="Numero Bolla:" class="searchable-cell">{{ slip.full_slip_number }}</td>
+                <td data-label="Data:" class="searchable-cell">{{ slip.date|date:"d/m/Y" }}</td>
+                <td data-label="Destinatario:" class="searchable-cell hide-md">{{ slip.recipient.company_name }}</td>
+                <td data-label="Azioni:">
+                    <a href="{% url 'download_slip' slip.pk %}?view=true" target="_blank" class="btn btn-sm btn-secondary"
+                       data-bs-toggle="tooltip" data-bs-placement="top" title="Visualizza">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div id="noResultsMessage" class="alert alert-info text-center mt-5 d-none" role="alert">
+    <h4 class="alert-heading"><i class="fas fa-search me-2"></i>Nessuna Bolla Trovata!</h4>
+    <p>Nessuna bolla corrisponde ai criteri di ricerca. Prova a modificare il filtro.</p>
+</div>
+
+{% else %}
+<div class="alert alert-info text-center mt-5" role="alert">
+    <h4 class="alert-heading">Nessuna Bolla Trovata</h4>
+    <p>Non ci sono bolle da mostrare.</p>
+</div>
+{% endif %}
+
+{% endblock user_content %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('realTimeSearch');
+        const clearButton = document.getElementById('clearSearch');
+        const filterButton = document.getElementById('filter-button');
+        const selectAllCheckbox = document.getElementById('select-all');
+        const checkboxes = document.querySelectorAll('.slip-checkbox');
+        const printButton = document.getElementById('print-selected');
+        const selectedCountElement = document.getElementById('selected-count');
+        const visibleCountElement = document.getElementById('visibleCount');
+        const totalCountElement = document.getElementById('totalCount');
+        const slipsTable = document.getElementById('slipsTable');
+        const noResultsMessage = document.getElementById('noResultsMessage');
+        const totalSlips = document.querySelectorAll('.slip-row').length;
+
+        function applyFilters() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const startNum = parseInt(document.getElementById('start_slip_number').value) || null;
+            const startYear = parseInt(document.getElementById('start_slip_year').value) || null;
+            const endNum = parseInt(document.getElementById('end_slip_number').value) || null;
+            const endYear = parseInt(document.getElementById('end_slip_year').value) || null;
+
+            const rows = document.querySelectorAll('.slip-row');
+            let visibleCount = 0;
+
+            rows.forEach(row => {
+                const slipNumber = parseInt(row.dataset.slipNumber);
+                const slipYear = parseInt(row.dataset.slipYear);
+                const searchableText = row.dataset.searchable.toLowerCase();
+
+                let show = true;
+
+                if (startYear) {
+                    if (slipYear < startYear) show = false;
+                    if (slipYear === startYear && startNum && slipNumber < startNum) show = false;
+                }
+                if (endYear) {
+                    if (slipYear > endYear) show = false;
+                    if (slipYear === endYear && endNum && slipNumber > endNum) show = false;
+                }
+
+                if (searchTerm && !searchableText.includes(searchTerm)) {
+                    show = false;
+                }
+
+                if (show) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            if(visibleCountElement) visibleCountElement.textContent = visibleCount;
+            if(slipsTable) slipsTable.style.display = visibleCount > 0 ? '' : 'none';
+            if(noResultsMessage) noResultsMessage.style.display = visibleCount > 0 ? 'none' : 'block';
+        }
+
+        function updateSelectedCount() {
+            const count = document.querySelectorAll('.slip-checkbox:checked').length;
+            if (selectedCountElement) {
+                selectedCountElement.textContent = `${count} bolle selezionate`;
+            }
+        }
+
+        if(filterButton) filterButton.addEventListener('click', applyFilters);
+        if(searchInput) searchInput.addEventListener('input', applyFilters);
+        if(clearButton) clearButton.addEventListener('click', () => {
+            searchInput.value = '';
+            document.getElementById('start_slip_number').value = '';
+            document.getElementById('start_slip_year').value = '';
+            document.getElementById('end_slip_number').value = '';
+            document.getElementById('end_slip_year').value = '';
+            applyFilters();
+        });
+
+        if(selectAllCheckbox) {
+            selectAllCheckbox.addEventListener('change', function(e) {
+                checkboxes.forEach(checkbox => {
+                    const row = checkbox.closest('.slip-row');
+                    if (row.style.display !== 'none') {
+                        checkbox.checked = e.target.checked;
+                    }
+                });
+                updateSelectedCount();
+            });
+        }
+
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', updateSelectedCount);
+        });
+
+        if(printButton) {
+            printButton.addEventListener('click', function() {
+                const selectedSlips = [];
+                const checkboxes = document.querySelectorAll('.slip-checkbox:checked');
+                checkboxes.forEach(checkbox => {
+                    selectedSlips.push(checkbox.value);
+                });
+
+                if (selectedSlips.length > 0) {
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = "{% url 'custom_print' %}";
+                    
+                    const csrfInput = document.createElement('input');
+                    csrfInput.type = 'hidden';
+                    csrfInput.name = 'csrfmiddlewaretoken';
+                    csrfInput.value = '{{ csrf_token }}';
+                    form.appendChild(csrfInput);
+
+                    const slipsInput = document.createElement('input');
+                    slipsInput.type = 'hidden';
+                    slipsInput.name = 'selected_slips';
+                    slipsInput.value = selectedSlips.join(',');
+                    form.appendChild(slipsInput);
+
+                    document.body.appendChild(form);
+                    form.submit();
+                } else {
+                    alert('Seleziona almeno una bolla da stampare.');
+                }
+            });
+        }
+        
+        if(totalCountElement) totalCountElement.textContent = totalSlips;
+        applyFilters();
+        updateSelectedCount();
+    });
+</script>
+{% endblock extra_js %}
