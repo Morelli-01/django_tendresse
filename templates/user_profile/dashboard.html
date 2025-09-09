@@ -25,6 +25,89 @@
         font-size: 0.9rem;
         color: #6c757d;
     }
+    
+    /* Responsive table columns - hide less important columns on medium screens */
+    @media (max-width: 1199px) {
+        .table-slips .hide-md {
+            display: none !important;
+        }
+        
+        /* Make action buttons smaller on medium screens */
+        .table-slips .btn-group .btn {
+            padding: 4px 8px;
+            font-size: 0.8rem;
+        }
+        
+        .table-slips .btn-group .btn i {
+            font-size: 0.9rem;
+        }
+    }
+    
+    /* Further adjustments for smaller medium screens */
+    @media (max-width: 991px) {
+        .table-slips .hide-sm {
+            display: none !important;
+        }
+        
+        /* Stack action buttons vertically if needed */
+        .table-slips .btn-group {
+            flex-direction: column;
+            gap: 2px;
+        }
+        
+        .table-slips .btn-group .btn {
+            width: 100%;
+            margin: 0;
+        }
+    }
+    
+    /* Mobile responsive - keep existing mobile styles */
+    @media (max-width: 768px) {
+        .table-slips thead {
+            display: none;
+        }
+        
+        .table-slips tbody tr {
+            display: block;
+            margin-bottom: 15px;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 10px;
+        }
+        
+        .table-slips tbody td {
+            display: block;
+            text-align: right;
+            padding: 8px 0;
+            border: none;
+            position: relative;
+            padding-left: 50%;
+        }
+        
+        .table-slips tbody td::before {
+            content: attr(data-label);
+            position: absolute;
+            left: 10px;
+            width: calc(50% - 20px);
+            padding-right: 10px;
+            text-align: left;
+            font-weight: bold;
+            color: var(--color-heading);
+        }
+        
+        /* Reset button group for mobile */
+        .table-slips .btn-group {
+            flex-direction: row;
+            justify-content: flex-end;
+            gap: 5px;
+        }
+        
+        .table-slips .btn-group .btn {
+            width: auto;
+            padding: 6px 10px;
+            font-size: 0.85rem;
+        }
+    }
 </style>
 
 <h1 class="dashboard-header mb-4" data-aos="fade-up">
@@ -68,9 +151,9 @@
             <tr>
                 <th><span data-lang="it">Numero Bolla</span><span data-lang="en" class="d-none">Slip Number</span></th>
                 <th><span data-lang="it">Data</span><span data-lang="en" class="d-none">Date</span></th>
-                <th><span data-lang="it">Destinatario</span><span data-lang="en" class="d-none">Recipient</span></th>
-                <th><span data-lang="it">Lavorazione</span><span data-lang="en" class="d-none">Processing</span></th>
-                <th><span data-lang="it">Quantità Totale</span><span data-lang="en" class="d-none">Total Quantity</span></th>
+                <th class="hide-md"><span data-lang="it">Destinatario</span><span data-lang="en" class="d-none">Recipient</span></th>
+                <th class="hide-md"><span data-lang="it">Lavorazione</span><span data-lang="en" class="d-none">Processing</span></th>
+                <th class="hide-sm"><span data-lang="it">Quantità Totale</span><span data-lang="en" class="d-none">Total Quantity</span></th>
                 <th><span data-lang="it">Azioni</span><span data-lang="en" class="d-none">Actions</span></th>
             </tr>
         </thead>
@@ -79,10 +162,10 @@
             <tr class="slip-row" data-searchable="{{ slip.full_slip_number }} {{ slip.date|date:'d/m/Y' }} {{ slip.recipient.company_name }} {{ slip.lavorazione }} {{ slip.get_total_quantity }}">
                 <td data-label="Numero Bolla:" class="searchable-cell">{{ slip.full_slip_number }}</td>
                 <td data-label="Data:" class="searchable-cell">{{ slip.date|date:"d/m/Y" }}</td>
-                <td data-label="Destinatario:" class="searchable-cell">{{ slip.recipient.company_name }}</td>
-                <td data-label="Lavorazione:" class="searchable-cell">{{ slip.lavorazione }}</td>
-                <td data-label="Quantità Totale:" class="searchable-cell">{{ slip.get_total_quantity }}</td>
-                <td>
+                <td data-label="Destinatario:" class="searchable-cell hide-md">{{ slip.recipient.company_name }}</td>
+                <td data-label="Lavorazione:" class="searchable-cell hide-md">{{ slip.lavorazione }}</td>
+                <td data-label="Quantità Totale:" class="searchable-cell hide-sm">{{ slip.get_total_quantity }}</td>
+                <td data-label="Azioni:">
                     <div class="btn-group" role="group">
                         <a href="{% url 'edit_slip' slip.pk %}" class="btn btn-sm btn-info text-white"
                            data-bs-toggle="tooltip" data-bs-placement="top" title=""
@@ -101,7 +184,7 @@
                         <a href="{% url 'download_slip' slip.pk %}?view=true" target="_blank" class="btn btn-sm btn-secondary" 
                            data-bs-toggle="tooltip" data-bs-placement="top" title=""
                            data-tooltip-en="View"
-                           data-tooltip-it="Visualizza",
+                           data-tooltip-it="Visualizza"
                            style="background-color: #34495E; border-radius: 5px;border-color:#34495E;">
                             <i class="fas fa-eye"></i>
                         </a>
@@ -111,8 +194,7 @@
                             <button type="submit" class="btn btn-sm btn-danger" data-bs-toggle="tooltip" data-bs-placement="top" title=""
                                     data-tooltip-en="Delete"
                                     data-tooltip-it="Elimina"
-                                    style="background-color: #E74C3C; border-color:#E74C3C;"
-                                    >
+                                    style="background-color: #E74C3C; border-color:#E74C3C;">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </form>
@@ -285,8 +367,6 @@
                 }
             });
         }
-        
-
     });
 </script>
 {% endblock %}
