@@ -1,6 +1,4 @@
-import json
 from django.shortcuts import render, redirect
-import requests
 from .models import TerritoryImage, AboutImage ,HeroImage, Retailer
 import random
 from django.contrib.auth import authenticate, login, logout

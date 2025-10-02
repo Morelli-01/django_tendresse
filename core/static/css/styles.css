@@ -894,3 +894,155 @@ body {
 .accordion.retailer-box .accordion-collapse {
     transition: all 0.4s ease;
 }
+/* ====================================== */
+/* Modern Retailers Hero Section */
+/* ====================================== */
+.retailers-hero {
+    position: relative;
+    padding: 120px 0 80px;
+    background: linear-gradient(135deg, #4682b4 0%, #5a8db8 50%, #6fa3c4 100%);
+    overflow: hidden;
+}
+
+.retailers-hero::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+.retailers-hero::after {
+    content: "";
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 80px;
+    background: var(--color-background);
+    clip-path: polygon(0 50%, 100% 0, 100% 100%, 0 100%);
+}
+
+.retailers-hero .container {
+    position: relative;
+    z-index: 2;
+}
+
+.hero-content {
+    text-align: center;
+    color: white;
+    animation: fadeInUpRetailers 0.8s ease-out;
+}
+
+.hero-icon {
+    font-size: 3.5rem;
+    margin-bottom: 1.5rem;
+    opacity: 0.9;
+    animation: floatRetailers 3s ease-in-out infinite;
+}
+
+.hero-title {
+    font-family: var(--font-primary);
+    font-size: 3.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    text-shadow: 2px 4px 8px rgba(0, 0, 0, 0.2);
+    letter-spacing: 1px;
+}
+
+.hero-subtitle {
+    font-size: 1.3rem;
+    font-weight: 300;
+    opacity: 0.95;
+    max-width: 700px;
+    margin: 0 auto 2rem;
+    line-height: 1.6;
+}
+
+.hero-badge {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    padding: 0.5rem 1.5rem;
+    border-radius: 50px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Animations for retailers hero */
+@keyframes fadeInUpRetailers {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes floatRetailers {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+/* Mobile Responsive for retailers hero */
+@media (max-width: 768px) {
+    .retailers-hero {
+        padding: 80px 0 60px;
+    }
+
+    .retailers-hero::after {
+        height: 50px;
+    }
+
+    .hero-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .hero-title {
+        font-size: 2.2rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .hero-subtitle {
+        font-size: 1.05rem;
+        margin-bottom: 1.5rem;
+        padding: 0 15px;
+    }
+
+    .hero-badge {
+        font-size: 0.85rem;
+        padding: 0.4rem 1.2rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .retailers-hero {
+        padding: 70px 0 50px;
+    }
+
+    .hero-icon {
+        font-size: 2rem;
+    }
+
+    .hero-title {
+        font-size: 1.8rem;
+        letter-spacing: 0.5px;
+    }
+
+    .hero-subtitle {
+        font-size: 0.95rem;
+    }
+}
