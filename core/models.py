@@ -100,6 +100,29 @@ class HeroImage(models.Model):
         verbose_name = "Hero Image"
         verbose_name_plural = "Hero Images"
 
+class Retailer(models.Model):
+    """
+    Model to store information about retailers.
+    """
+    name = models.CharField(max_length=255, verbose_name="Nome Rivenditore")
+    street = models.CharField(max_length=255, verbose_name="Via", blank=True, null=True)
+    postal_code = models.CharField(max_length=10, verbose_name="CAP", blank=True, null=True)
+    city = models.CharField(max_length=100, verbose_name="Città", blank=True, null=True)
+    province = models.CharField(max_length=100, verbose_name="Provincia", blank=True, null=True)
+    region = models.CharField(max_length=100, verbose_name="Regione", blank=True, null=True)
+    country = models.CharField(max_length=100, verbose_name="Paese", blank=True, null=True)
+    vat_number = models.CharField(max_length=20, blank=True, null=True, verbose_name="Partita IVA")
+    fiscal_code = models.CharField(max_length=20, blank=True, null=True, verbose_name="Codice Fiscale")
+    phone = models.CharField(max_length=50, blank=True, null=True, verbose_name="Telefono")
+
+    class Meta:
+        verbose_name = "Rivenditore"
+        verbose_name_plural = "Rivenditori"
+        ordering = ['region', 'name']
+
+    def __str__(self):
+        return self.name
+
 class Recipient(models.Model):
     """
     Model to store details of a recipient for delivery slips.

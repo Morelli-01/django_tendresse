@@ -653,8 +653,7 @@ body {
 
 .alert.alert-success {
 	border-color: #28a745; /* Green border */
-	background-color: #d4edda; /* Light green background */
-	color: #155724; /* Dark green text */
+	background-color: #d4edda; /* Light green background */	color: #155724; /* Dark green text */
 }
 
 .alert.alert-info {
@@ -757,4 +756,141 @@ body {
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+/* --- Retailers Page Styling --- */
+/* Main retailer accordion wrapper */
+.accordion.retailer-box {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    margin-bottom: 30px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.accordion.retailer-box:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+}
+
+.accordion.retailer-box .accordion-item {
+    border: none;
+    background: transparent;
+}
+
+.accordion.retailer-box .accordion-header {
+    border: none;
+}
+
+.accordion.retailer-box .accordion-button {
+    background: linear-gradient(135deg, var(--color-primary) 0%, #5a8db8 100%);
+    color: white;
+    font-family: var(--font-primary);
+    font-size: 1.4rem;
+    font-weight: 600;
+    padding: 20px 25px;
+    border: none;
+    box-shadow: none;
+    transition: all 0.3s ease;
+}
+
+.accordion.retailer-box .accordion-button:not(.collapsed) {
+    background: linear-gradient(135deg, var(--color-primary-darker) 0%, #4a7a9f 100%);
+    color: white;
+}
+
+.accordion.retailer-box .accordion-button:focus {
+    box-shadow: none;
+    border: none;
+}
+
+.accordion.retailer-box .accordion-button::after {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='white'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e");
+    filter: brightness(0) invert(1);
+    transition: transform 0.3s ease;
+}
+
+.accordion.retailer-box .accordion-button:not(.collapsed)::after {
+    transform: rotate(-180deg);
+}
+
+.accordion.retailer-box .accordion-body {
+    padding: 30px 25px;
+    background: white;
+}
+
+.accordion.retailer-box .accordion-body .list-unstyled {
+    margin: 0;
+}
+
+.accordion.retailer-box .accordion-body .list-unstyled li {
+    padding: 20px;
+    margin-bottom: 15px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 10px;
+    border-left: 4px solid var(--color-primary);
+    transition: all 0.3s ease;
+    position: relative;
+    color: var(--color-text);
+}
+
+.accordion.retailer-box .accordion-body .list-unstyled li:last-child {
+    margin-bottom: 0;
+}
+
+.accordion.retailer-box .accordion-body .list-unstyled li:hover {
+    transform: translateX(5px);
+    border-left-color: var(--color-primary-darker);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+}
+
+.accordion.retailer-box .accordion-body .list-unstyled li strong {
+    display: block;
+    font-family: var(--font-primary);
+    font-size: 1.2rem;
+    color: var(--color-heading);
+    margin-bottom: 8px;
+}
+
+.accordion.retailer-box .accordion-body .list-unstyled li br {
+    display: block;
+    content: "";
+    margin-top: 5px;
+}
+
+/* Add icon before retailer name */
+.accordion.retailer-box .accordion-body .list-unstyled li strong::before {
+    content: "\f3c5";
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    margin-right: 10px;
+    color: var(--color-primary);
+    font-size: 1rem;
+}
+
+/* Responsive adjustments for retailers */
+@media (max-width: 768px) {
+    .accordion.retailer-box .accordion-button {
+        font-size: 1.1rem;
+        padding: 15px 20px;
+    }
+    
+    .accordion.retailer-box .accordion-body {
+        padding: 20px 15px;
+    }
+    
+    .accordion.retailer-box .accordion-body .list-unstyled li {
+        padding: 15px;
+    }
+    
+    .accordion.retailer-box .accordion-body .list-unstyled li strong {
+        font-size: 1.1rem;
+    }
+}
+
+/* Animation for retailer accordion opening */
+.accordion.retailer-box .accordion-collapse {
+    transition: all 0.4s ease;
 }

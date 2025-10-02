@@ -113,6 +113,14 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link {% if request.path == '/retailers/' %}active{% endif %}"
+                       {% if request.path == '/retailers/' %}aria-current="page"{% endif %}
+                       href="/retailers/">
+                        <span data-lang="it">Rivenditori</span>
+                        <span data-lang="en" class="d-none">Retailers</span>
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link {% if request.path == '/contact/' %}active{% endif %}"
                        {% if request.path == '/contact/' %}aria-current="page"{% endif %}
                        href="/contact/">

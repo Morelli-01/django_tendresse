@@ -1,5 +1,7 @@
+import json
 from django.shortcuts import render, redirect
-from .models import TerritoryImage, AboutImage ,HeroImage
+import requests
+from .models import TerritoryImage, AboutImage ,HeroImage, Retailer
 import random
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import AuthenticationForm
@@ -140,3 +142,20 @@ def login_view(request):
 def logout_view(request):
     logout(request)
     return redirect('home')
+
+def retailers(request):
+    """
+    Renders the retailers page.
+    """
+    retailers = Retailer.objects.all()
+    retailers_by_region = {}
+
+    for retailer in retailers:
+        if retailer.region not in retailers_by_region:
+            retailers_by_region[retailer.region] = []
+        retailers_by_region[retailer.region].append(retailer)
+
+    context = {
+        'retailers_by_region': retailers_by_region,
+    }
+    return render(request, 'tendresse/retailers.html', context)

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from core.models import HeroImage, TerritoryImage, AboutImage, Recipient, Slip
+from core.models import HeroImage, TerritoryImage, AboutImage, Recipient, Slip, Retailer
 
 @admin.register(TerritoryImage)
 class TerritoryImageAdmin(admin.ModelAdmin):
@@ -12,6 +12,11 @@ class AboutImageImageAdmin(admin.ModelAdmin):
 @admin.register(HeroImage)
 class HeroImageAdmin(admin.ModelAdmin):
     list_display = ('original_image',)
+
+@admin.register(Retailer)
+class RetailerAdmin(admin.ModelAdmin):
+    list_display = ('name', 'street', 'postal_code', 'city', 'province', 'region', 'country', 'vat_number', 'fiscal_code', 'phone')
+    search_fields = ('name', 'street', 'city', 'province', 'region', 'country', 'vat_number', 'fiscal_code')
 
 @admin.register(Recipient)
 class RecipientAdmin(admin.ModelAdmin):
