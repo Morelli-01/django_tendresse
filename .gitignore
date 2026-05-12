@@ -209,4 +209,6 @@ __marimo__/
 *.sql
 migrations/
 !user_profile/migrations/
+.superpowers
+.claude
 !user_profile/migrations/*.py

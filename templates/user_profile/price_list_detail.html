@@ -86,12 +86,13 @@
     }
 
     .item-actions .btn {
+        width: 32px;
         height: 32px;
+        padding: 0;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        white-space: nowrap;
-        min-width: 32px;
+        flex-shrink: 0;
     }
 
     .price-list-empty {
@@ -197,7 +198,7 @@
                                 <th>Capo</th>
                                 <th>SKU</th>
                                 <th>Costo finale</th>
-                                <th>Azioni</th>
+                                <th style="width: 1%; white-space: nowrap;">Azioni</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -216,13 +217,16 @@
                                 </td>
                                 <td data-label="SKU:" class="price-list-item-sku">{{ item.sku|default:"-" }}</td>
                                 <td data-label="Costo finale:">€ {{ item.final_cost|floatformat:2 }}</td>
-                                <td data-label="Azioni:">
+                                <td data-label="Azioni:" style="white-space: nowrap;">
                                     <form id="del-item-{{ item.pk }}" action="{% url 'delete_price_list_item' price_list.pk item.pk %}" method="post" hidden>
                                         {% csrf_token %}
                                     </form>
-                                    <div class="item-actions d-flex align-items-center gap-2">
+                                    <div class="item-actions d-flex align-items-center gap-1">
                                         <a href="{% url 'price_list_item_edit' price_list.pk item.pk %}" class="btn btn-sm btn-primary" title="Modifica">
                                             <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'price_list_item_pdf' price_list.pk item.pk %}" class="btn btn-sm btn-outline-secondary" title="Scarica PDF" target="_blank">
+                                            <i class="fas fa-file-pdf"></i>
                                         </a>
                                         <button type="submit" form="del-item-{{ item.pk }}" class="btn btn-sm btn-outline-danger" title="Elimina">
                                             <i class="fas fa-trash"></i>

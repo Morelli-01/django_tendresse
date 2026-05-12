@@ -202,6 +202,14 @@
         color: #5f6b77;
     }
 
+    .item-editor-pdf-frame {
+        width: 100%;
+        min-height: 70vh;
+        border: 1px solid rgba(70, 130, 180, 0.18);
+        border-radius: 0.85rem;
+        background-color: white;
+    }
+
     /* compact add-form rows */
     .ie-add-form {
         padding: 0.75rem 1rem;
@@ -263,41 +271,12 @@
     {{ active_item.name }}
 </h1>
 
-<section class="item-editor-hero" data-aos="fade-up" data-aos-delay="100">
-    <div class="item-editor-hero-top">
-        <div>
-            <span class="item-editor-label">Scheda capo</span>
-            <h2 class="h3 mb-2">{{ active_item.sku }}</h2>
-            <p class="text-muted mb-0">
-                <span data-lang="it">Questa e la scheda dedicata del capo. Qui puoi lavorare su anagrafica, foto, materiali, lavorazioni e costi esterni.</span>
-                <span data-lang="en" class="d-none">Dedicated garment workspace.</span>
-            </p>
-        </div>
-        <div class="item-editor-status">
-            <strong>{% if active_item.is_active %}Attivo{% else %}Bozza{% endif %}</strong>
-            <span>stato capo</span>
-        </div>
-    </div>
-
-    <div class="item-editor-summary-grid" id="editor-summary-grid">
-        <div class="item-editor-summary-card">
-            <strong>€ {{ active_item.primary_total|floatformat:2 }}</strong>
-            <span>Materiali primari</span>
-        </div>
-        <div class="item-editor-summary-card">
-            <strong>€ {{ active_item.secondary_total|floatformat:2 }}</strong>
-            <span>Lavorazioni</span>
-        </div>
-        <div class="item-editor-summary-card">
-            <strong>€ {{ active_item.external_total|floatformat:2 }}</strong>
-            <span>Costi esterni</span>
-        </div>
-        <div class="item-editor-summary-card">
-            <strong>€ {{ active_item.final_cost|floatformat:2 }}</strong>
-            <span>Costo finale</span>
-        </div>
-    </div>
-</section>
+<div id="editor-summary-data" hidden>
+    <span data-summary="primary">€ {{ active_item.primary_total|floatformat:2 }}</span>
+    <span data-summary="secondary">€ {{ active_item.secondary_total|floatformat:2 }}</span>
+    <span data-summary="external">€ {{ active_item.external_total|floatformat:2 }}</span>
+    <span data-summary="final">€ {{ active_item.final_cost|floatformat:2 }}</span>
+</div>
 
 <ul class="nav item-editor-tabs mb-4" role="tablist" data-aos="fade-up" data-aos-delay="150">
     <li class="nav-item" role="presentation">
@@ -314,6 +293,9 @@
     </li>
     <li class="nav-item" role="presentation">
         <button class="nav-link {% if active_tab == 'external' %}active{% endif %}" data-tab-key="external" id="external-tab" data-bs-toggle="tab" data-bs-target="#external-pane" type="button" role="tab" aria-controls="external-pane" aria-selected="{% if active_tab == 'external' %}true{% else %}false{% endif %}">Costi esterni</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link {% if active_tab == 'pdf' %}active{% endif %}" data-tab-key="pdf" id="pdf-tab" data-bs-toggle="tab" data-bs-target="#pdf-pane" type="button" role="tab" aria-controls="pdf-pane" aria-selected="{% if active_tab == 'pdf' %}true{% else %}false{% endif %}">PDF</button>
     </li>
 </ul>
 
@@ -744,6 +726,26 @@
             {% else %}
             <div class="item-editor-empty">Nessun costo esterno inserito per questo capo.</div>
             {% endif %}
+        </div>
+    </div>
+
+    <div class="tab-pane fade {% if active_tab == 'pdf' %}show active{% endif %}" id="pdf-pane" role="tabpanel" aria-labelledby="pdf-tab" tabindex="0">
+        <div class="item-editor-panel">
+            <div class="item-editor-photo-toolbar">
+                <div>
+                    <h3 class="h5 mb-1">Anteprima PDF</h3>
+                    <small class="text-muted">La preview viene aggiornata ogni volta che apri questa scheda.</small>
+                </div>
+                <a href="{% url 'price_list_item_pdf' price_list.pk active_item.pk %}" class="btn btn-sm btn-outline-secondary" target="_blank" rel="noopener">
+                    <i class="fas fa-external-link-alt me-1"></i>Apri in una nuova scheda
+                </a>
+            </div>
+
+            <iframe
+                class="item-editor-pdf-frame js-item-editor-pdf-preview"
+                title="Anteprima PDF {{ active_item.name }}"
+                data-pdf-src="{% url 'price_list_item_pdf' price_list.pk active_item.pk %}"
+            ></iframe>
         </div>
     </div>
 

@@ -13,6 +13,7 @@ from django.db import IntegrityError
 from django.db.models import Max
 from django.conf import settings
 from django.urls import reverse
+from django.views.decorators.clickjacking import xframe_options_sameorigin
 import subprocess
 import tempfile
 import os
@@ -362,6 +363,257 @@ def generate_slip_pdf(slip):
                 print(f"Generated PDFs found: {generated_pdfs}")
 
             return None
+
+def generate_price_list_item_pdf(item):
+    from io import BytesIO
+    from reportlab.pdfgen import canvas as rl_canvas
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib import colors
+    from PIL import Image as PILImage
+    from datetime import date as _date
+
+    buf = BytesIO()
+    page_w, page_h = A4  # 595.27 x 841.89 pt
+    ml = 50
+    mr = 50
+    mt = 45
+
+    c = rl_canvas.Canvas(buf, pagesize=A4)
+
+    # Column x-positions for tables (no U.M. column)
+    # Materials / Works: Descrizione | Qtà | €/u | Totale
+    cx_desc  = ml           # left-aligned
+    cx_qty   = ml + 340     # right-aligned
+    cx_ucost = ml + 450     # right-aligned
+    cx_tot   = page_w - mr  # right-aligned (545.27)
+    # External costs: Descrizione | Tipo | Valore | Totale
+    cx_tipo  = ml + 330     # center-aligned
+    cx_val   = ml + 450     # right-aligned
+
+    def draw_at(text, x, y_pos, align='left'):
+        if align == 'right':
+            c.drawRightString(x, y_pos, str(text))
+        elif align == 'center':
+            c.drawCentredString(x, y_pos, str(text))
+        else:
+            c.drawString(x, y_pos, str(text))
+
+    def section_header(title, y_pos):
+        c.setFont('Helvetica-Bold', 10)
+        c.setFillColor(colors.black)
+        c.drawString(ml, y_pos, title.upper())
+        c.setLineWidth(1)
+        c.setStrokeColor(colors.black)
+        c.line(ml, y_pos - 3, page_w - mr, y_pos - 3)
+        return y_pos - 17
+
+    def col_headers(labels_aligns, y_pos):
+        c.setFont('Helvetica-Bold', 9.5)
+        c.setFillColor(colors.HexColor('#333333'))
+        for text, x, align in labels_aligns:
+            draw_at(text, x, y_pos, align)
+        c.setLineWidth(0.7)
+        c.setStrokeColor(colors.HexColor('#999999'))
+        c.line(ml, y_pos - 4, page_w - mr, y_pos - 4)
+        c.setFillColor(colors.black)
+        return y_pos - 16
+
+    def data_row(cells, y_pos, last=False):
+        c.setFont('Times-Roman', 10)
+        c.setFillColor(colors.black)
+        for text, x, align in cells:
+            draw_at(text, x, y_pos, align)
+        if not last:
+            c.setLineWidth(0.3)
+            c.setStrokeColor(colors.HexColor('#e0e0e0'))
+            c.line(ml, y_pos - 4, page_w - mr, y_pos - 4)
+        return y_pos - 15
+
+    # ── HEADER ──────────────────────────────────────────────────────
+    y = page_h - mt
+    logo_path = os.path.join(settings.BASE_DIR, 'core', 'static', 'images', 'tendresseLogo.png')
+    # Logo is 618×296 px (aspect ~2.09). At logo_h=90 → logo_w≈188pt.
+    logo_h = 90
+    if os.path.exists(logo_path):
+        try:
+            pil = PILImage.open(logo_path)
+            logo_w = logo_h * pil.width / pil.height
+            c.drawImage(logo_path, ml, y - logo_h, width=logo_w, height=logo_h, mask='auto')
+        except Exception:
+            c.setFont('Helvetica-Bold', 26)
+            c.drawString(ml, y - 40, 'TENDRESSE')
+    else:
+        c.setFont('Helvetica-Bold', 26)
+        c.drawString(ml, y - 40, 'TENDRESSE')
+
+    # Right side: item name, Art. code, date — distributed across logo_h
+    c.setFillColor(colors.black)
+    c.setFont('Times-Bold', 16)
+    c.drawRightString(page_w - mr, y - 22, item.name)
+    c.setFont('Times-Roman', 12)
+    if item.sku:
+        c.drawRightString(page_w - mr, y - 42, f'Art. {item.sku}')
+    c.setFont('Times-Roman', 10)
+    c.setFillColor(colors.HexColor('#999999'))
+    c.drawRightString(page_w - mr, y - 60, _date.today().strftime('%d/%m/%Y'))
+    c.setFillColor(colors.black)
+
+    y -= logo_h + 10
+    c.setLineWidth(1.5)
+    c.setStrokeColor(colors.black)
+    c.line(ml, y, page_w - mr, y)
+    y -= 16
+
+    # ── PHOTO + COST SUMMARY ────────────────────────────────────────
+    # box_h computed: label(16) + gap(6) + 3 rows×15(45) + sep(8) + total(18) + padding(12) = 105
+    box_h = 105
+    thumb_w = 62
+
+    photo = item.main_photo
+    photo_ok = False
+    if photo:
+        try:
+            img_path = photo.original_image.path
+            if os.path.exists(img_path):
+                c.drawImage(img_path, ml, y - box_h, width=thumb_w, height=box_h,
+                            preserveAspectRatio=True, anchor='n', mask='auto')
+                photo_ok = True
+        except Exception:
+            pass
+    if not photo_ok:
+        c.setStrokeColor(colors.HexColor('#cccccc'))
+        c.setLineWidth(0.5)
+        c.setFillColor(colors.HexColor('#f0f0f0'))
+        c.rect(ml, y - box_h, thumb_w, box_h, fill=1, stroke=1)
+        c.setFillColor(colors.black)
+
+    # Summary box — sits to the right of the thumbnail
+    sx = ml + thumb_w + 14
+    sw = page_w - mr - sx
+
+    c.setStrokeColor(colors.HexColor('#cccccc'))
+    c.setLineWidth(0.5)
+    c.roundRect(sx, y - box_h, sw, box_h, 4, stroke=1, fill=0)
+
+    # Label
+    c.setFont('Helvetica-Bold', 8.5)
+    c.setFillColor(colors.HexColor('#888888'))
+    c.drawString(sx + 12, y - 16, 'RIEPILOGO COSTI')
+
+    # Three cost rows
+    ry = y - 34
+    row_gap = 15
+    c.setFont('Times-Roman', 11)
+    for label, value in [
+        ('Materiali primari', f'€ {item.primary_total:.2f}'),
+        ('Lavorazioni',       f'€ {item.secondary_total:.2f}'),
+        ('Costi esterni',     f'€ {item.external_total:.2f}'),
+    ]:
+        c.setFillColor(colors.HexColor('#555555'))
+        c.drawString(sx + 12, ry, label)
+        c.setFillColor(colors.black)
+        c.drawRightString(sx + sw - 12, ry, value)
+        ry -= row_gap
+
+    # Separator line before total
+    sep_y = ry + row_gap - 6
+    c.setLineWidth(0.5)
+    c.setStrokeColor(colors.HexColor('#bbbbbb'))
+    c.line(sx + 12, sep_y, sx + sw - 12, sep_y)
+
+    # Total row
+    total_y = sep_y - 15
+    c.setFont('Times-Bold', 13)
+    c.setFillColor(colors.black)
+    c.drawString(sx + 12, total_y, 'Costo finale')
+    c.drawRightString(sx + sw - 12, total_y, f'€ {item.final_cost:.2f}')
+
+    y -= box_h + 18
+
+    # ── MATERIALS TABLE ─────────────────────────────────────────────
+    materials = list(item.materials.all())
+    if materials:
+        y = section_header('Materiali primari', y)
+        y = col_headers([
+            ('Descrizione', cx_desc,  'left'),
+            ('Qtà',         cx_qty,   'right'),
+            ('€/u',         cx_ucost, 'right'),
+            ('Totale',      cx_tot,   'right'),
+        ], y)
+        for i, mat in enumerate(materials):
+            y = data_row([
+                (mat.description,         cx_desc,  'left'),
+                (f'{mat.quantity:g}',      cx_qty,   'right'),
+                (f'{mat.unit_cost:.4f}',  cx_ucost, 'right'),
+                (f'€ {mat.subtotal:.2f}', cx_tot,   'right'),
+            ], y, last=(i == len(materials) - 1))
+        y -= 12
+
+    # ── WORKS TABLE ─────────────────────────────────────────────────
+    works = list(item.works.all())
+    if works:
+        y = section_header('Lavorazioni', y)
+        y = col_headers([
+            ('Lavorazione', cx_desc,  'left'),
+            ('Qtà',         cx_qty,   'right'),
+            ('€/u',         cx_ucost, 'right'),
+            ('Totale',      cx_tot,   'right'),
+        ], y)
+        for i, work in enumerate(works):
+            y = data_row([
+                (work.operation_name,      cx_desc,  'left'),
+                (f'{work.quantity:g}',      cx_qty,   'right'),
+                (f'{work.unit_cost:.4f}',  cx_ucost, 'right'),
+                (f'€ {work.subtotal:.2f}', cx_tot,   'right'),
+            ], y, last=(i == len(works) - 1))
+        y -= 12
+
+    # ── EXTERNAL COSTS TABLE ────────────────────────────────────────
+    ext_costs = list(item.external_costs.all())
+    if ext_costs:
+        y = section_header('Costi esterni', y)
+        y = col_headers([
+            ('Descrizione', cx_desc, 'left'),
+            ('Tipo',        cx_tipo, 'center'),
+            ('Valore',      cx_val,  'right'),
+            ('Totale',      cx_tot,  'right'),
+        ], y)
+        mat_total   = item.primary_total
+        work_total  = item.secondary_total
+        fixed_total = item.external_fixed_total
+        for i, ext in enumerate(ext_costs):
+            if ext.cost_type == PriceListItem.ExternalCostType.FIXED:
+                tipo, val_text = 'Fisso', f'€ {ext.amount:.2f}'
+            else:
+                tipo, val_text = '%', f'{ext.amount:.0f}%'
+            subtotal = ext.subtotal(mat_total, work_total, fixed_total)
+            y = data_row([
+                (ext.description,     cx_desc, 'left'),
+                (tipo,                cx_tipo, 'center'),
+                (val_text,            cx_val,  'right'),
+                (f'€ {subtotal:.2f}', cx_tot,  'right'),
+            ], y, last=(i == len(ext_costs) - 1))
+
+    c.save()
+    buf.seek(0)
+    return buf.getvalue()
+
+
+@login_required
+@xframe_options_sameorigin
+def price_list_item_pdf_view(request, pk, item_pk):
+    price_list, item = get_price_list_item_or_404(pk, item_pk)
+    item = (
+        PriceListItem.objects
+        .prefetch_related('materials', 'works', 'external_costs', 'photos')
+        .get(pk=item_pk)
+    )
+    pdf_bytes = generate_price_list_item_pdf(item)
+    safe_name = f"{item.sku or item.name}.pdf".replace('/', '-').replace(' ', '_')
+    response = HttpResponse(pdf_bytes, content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="{safe_name}"'
+    return response
+
 
 @login_required
 def profile_view(request):
