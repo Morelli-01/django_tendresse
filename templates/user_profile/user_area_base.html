@@ -36,6 +36,13 @@
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link {% if 'price_list' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'price_list_list' %}">
+                                <i class="fas fa-tags me-2"></i>
+                                <span data-lang="it">Listini Prezzi</span>
+                                <span data-lang="en" class="d-none">Price Lists</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link {% if 'recipient' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'recipient_list' %}">
                                 <i class="fas fa-users me-2"></i>
                                 <span data-lang="it">Gestione Destinatari</span>

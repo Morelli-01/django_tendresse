@@ -1,4 +1,6 @@
 # file: user_profile/views.py
+from decimal import Decimal, InvalidOperation
+
 from django.db import models
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
@@ -8,14 +10,224 @@ import json
 from django.http import HttpResponse
 from datetime import date
 from django.db import IntegrityError
-from django.db.models import Max, Q
+from django.db.models import Max
 from django.conf import settings
+from django.urls import reverse
 import subprocess
 import tempfile
 import os
 from io import BytesIO
 from PyPDF2 import PdfMerger
 import concurrent.futures
+
+from .models import (
+    PriceList,
+    PriceListItem,
+    PriceListItemExternalCost,
+    PriceListItemMaterial,
+    PriceListItemPhoto,
+    PriceListItemWork,
+)
+
+
+WORK_PRESETS = {
+    "confezionatura": {
+        "label": "Confezionatura",
+        "quantity": Decimal("1"),
+        "unit": "pz",
+        "unit_cost": Decimal("1.50"),
+    },
+    "lavanderia": {
+        "label": "Lavanderia",
+        "quantity": Decimal("1"),
+        "unit": "pz",
+        "unit_cost": Decimal("0.40"),
+    },
+    "smacchinatura": {
+        "label": "Smacchinatura",
+        "quantity": Decimal("1"),
+        "unit": "pz",
+        "unit_cost": Decimal("4.10"),
+    },
+    "attaccatura_bottoni": {
+        "label": "Attaccatura Bottoni",
+        "quantity": Decimal("6"),
+        "unit": "bottoni",
+        "unit_cost": Decimal("0.10"),
+    },
+    "cartellino": {
+        "label": "Cartellino",
+        "quantity": Decimal("1"),
+        "unit": "pz",
+        "unit_cost": Decimal("0.16"),
+    },
+    "stiro": {
+        "label": "Stiro",
+        "quantity": Decimal("1"),
+        "unit": "pz",
+        "unit_cost": Decimal("1.50"),
+    },
+}
+
+EXTERNAL_COST_PRESETS = {
+    "generali": {
+        "label": "Generali",
+        "cost_type": PriceListItem.ExternalCostType.FIXED,
+        "amount": Decimal("2.32"),
+        "applies_to": PriceListItem.ExternalCostBase.SUBTOTAL,
+    },
+    "margine": {
+        "label": "Margine",
+        "cost_type": PriceListItem.ExternalCostType.PERCENTAGE,
+        "amount": Decimal("33.00"),
+        "applies_to": PriceListItem.ExternalCostBase.SUBTOTAL_PLUS_FIXED,
+    },
+}
+
+
+def is_dynamic_request(request):
+    return request.headers.get("x-requested-with") == "XMLHttpRequest"
+
+
+def parse_decimal_input(raw_value, default=Decimal("0")):
+    normalized_value = (raw_value or "").strip().replace(",", ".")
+    if not normalized_value:
+        return default
+
+    try:
+        return Decimal(normalized_value)
+    except InvalidOperation as exc:
+        raise ValueError from exc
+
+
+def normalize_choice(raw_value, choices, default_value):
+    valid_values = {choice_value for choice_value, _ in choices}
+    if raw_value in valid_values:
+        return raw_value
+    return default_value
+
+
+def add_editor_message(request, message_text, message_tag):
+    if message_tag == "danger":
+        messages.error(request, message_text)
+    elif message_tag == "warning":
+        messages.warning(request, message_text)
+    else:
+        messages.success(request, message_text)
+
+
+def get_next_sort_order(queryset, field_name="sort_order"):
+    aggregate_key = f"max_{field_name}"
+    return (queryset.aggregate(**{aggregate_key: Max(field_name)})[aggregate_key] or 0) + 1
+
+
+def get_price_list_detail_url(price_list, active_item=None):
+    if active_item is not None:
+        return get_price_list_item_edit_url(price_list, active_item)
+    return reverse("price_list_detail", kwargs={"pk": price_list.pk})
+
+
+def get_price_list_item_edit_url(price_list, active_item):
+    return reverse(
+        "price_list_item_edit",
+        kwargs={"pk": price_list.pk, "item_pk": active_item.pk},
+    )
+
+
+def get_item_editor_tab(request, default_tab="general"):
+    return (request.GET.get("tab") or request.POST.get("active_tab") or default_tab).strip() or default_tab
+
+
+def build_price_list_item_editor_context(
+    price_list,
+    active_item,
+    active_tab="general",
+    editor_message=None,
+    editor_message_tag="success",
+):
+    active_item = (
+        price_list.items.prefetch_related("photos", "materials", "works", "external_costs")
+        .filter(pk=active_item.pk)
+        .first()
+    )
+
+    return {
+        "price_list": price_list,
+        "active_item": active_item,
+        "material_type_choices": PriceListItem.MaterialType.choices,
+        "material_unit_choices": PriceListItem.MaterialUnit.choices,
+        "external_cost_type_choices": PriceListItem.ExternalCostType.choices,
+        "external_cost_base_choices": PriceListItem.ExternalCostBase.choices,
+        "work_presets": WORK_PRESETS,
+        "external_cost_presets": EXTERNAL_COST_PRESETS,
+        "active_tab": active_tab,
+        "editor_message": editor_message,
+        "editor_message_tag": editor_message_tag,
+    }
+
+
+def render_price_list_item_editor_partial(
+    request,
+    price_list,
+    active_item,
+    active_tab="general",
+    editor_message=None,
+    editor_message_tag="success",
+    status=200,
+):
+    context = build_price_list_item_editor_context(
+        price_list,
+        active_item,
+        active_tab=active_tab,
+        editor_message=editor_message,
+        editor_message_tag=editor_message_tag,
+    )
+    return render(request, "user_profile/price_list_item_editor_partial.html", context, status=status)
+
+
+def redirect_to_price_list_editor(
+    request,
+    price_list,
+    active_item=None,
+    editor_message=None,
+    editor_message_tag="success",
+    status=200,
+    active_tab="general",
+):
+    if active_item is not None and is_dynamic_request(request):
+        return render_price_list_item_editor_partial(
+            request,
+            price_list,
+            active_item,
+            active_tab=active_tab,
+            editor_message=editor_message,
+            editor_message_tag=editor_message_tag,
+            status=status,
+        )
+
+    if editor_message:
+        add_editor_message(request, editor_message, editor_message_tag)
+
+    redirect_url = get_price_list_detail_url(price_list, active_item=active_item)
+    if active_item is not None and active_tab:
+        redirect_url = f"{redirect_url}?tab={active_tab}"
+    return redirect(redirect_url)
+
+
+def get_price_list_item_or_404(price_list_pk, item_pk):
+    price_list = get_object_or_404(PriceList, pk=price_list_pk)
+    price_list_item = get_object_or_404(PriceListItem, pk=item_pk, price_list=price_list)
+    return price_list, price_list_item
+
+
+def ensure_item_has_main_photo(price_list_item):
+    if price_list_item.photos.filter(is_main=True).exists():
+        return
+
+    fallback_photo = price_list_item.photos.order_by("order", "id").first()
+    if fallback_photo:
+        fallback_photo.is_main = True
+        fallback_photo.save(update_fields=["is_main"])
 
 def generate_slip_pdf(slip):
     """
@@ -174,6 +386,613 @@ def dashboard_view(request):
         "slips": slips,
     }
     return render(request, "user_profile/dashboard.html", context)
+
+
+@login_required
+def price_list_list_view(request):
+    context = {
+        "page_title": "Listini Prezzi",
+        "price_lists": PriceList.objects.all(),
+    }
+    return render(request, "user_profile/price_list_list.html", context)
+
+
+@login_required
+def price_list_detail_view(request, pk):
+    price_list = get_object_or_404(PriceList, pk=pk)
+
+    context = {
+        "page_title": f"Listino {price_list.name}",
+        "price_list": price_list,
+        "price_list_items": price_list.items.prefetch_related("photos", "materials", "works", "external_costs").all(),
+    }
+    return render(request, "user_profile/price_list_detail.html", context)
+
+
+@login_required
+def price_list_item_edit_view(request, pk, item_pk):
+    price_list, price_list_item = get_price_list_item_or_404(pk, item_pk)
+    active_tab = get_item_editor_tab(request)
+
+    if is_dynamic_request(request):
+        return render_price_list_item_editor_partial(
+            request,
+            price_list,
+            price_list_item,
+            active_tab=active_tab,
+        )
+
+    context = build_price_list_item_editor_context(
+        price_list,
+        price_list_item,
+        active_tab=active_tab,
+    )
+    context["page_title"] = f"{price_list_item.name} - {price_list.name}"
+    return render(request, "user_profile/price_list_item_edit.html", context)
+
+
+@login_required
+def create_price_list_view(request):
+    if request.method == "POST":
+        name = (request.POST.get("name") or "").strip()
+
+        if not name:
+            messages.error(request, "Inserisci un nome per il listino prezzi.")
+        else:
+            PriceList.objects.create(name=name)
+            messages.success(request, f'Listino prezzi "{name}" creato con successo!')
+
+    return redirect("price_list_list")
+
+
+@login_required
+def delete_price_list_view(request, pk):
+    price_list = get_object_or_404(PriceList, pk=pk)
+
+    if request.method == "POST":
+        price_list_name = price_list.name
+        price_list.delete()
+        messages.success(request, f'Listino prezzi "{price_list_name}" eliminato con successo.')
+
+    return redirect("price_list_list")
+
+
+@login_required
+def create_price_list_item_view(request, pk):
+    price_list = get_object_or_404(PriceList, pk=pk)
+
+    if request.method == "POST":
+        sku = (request.POST.get("sku") or "").strip()
+        name = (request.POST.get("name") or "").strip()
+        description = (request.POST.get("description") or "").strip()
+
+        if not sku or not name:
+            return redirect_to_price_list_editor(
+                request,
+                price_list,
+                editor_message="Inserisci sia il codice/SKU sia il nome del capo.",
+                editor_message_tag="danger",
+                status=400,
+            )
+
+        if price_list.items.filter(sku=sku).exists():
+            return redirect_to_price_list_editor(
+                request,
+                price_list,
+                editor_message=f'Esiste gia un capo con codice "{sku}" in questo listino.',
+                editor_message_tag="danger",
+                status=400,
+            )
+
+        try:
+            price_list_item = PriceListItem.objects.create(
+                price_list=price_list,
+                sku=sku,
+                name=name,
+                description=description or None,
+                sort_order=get_next_sort_order(price_list.items),
+            )
+        except IntegrityError:
+            return redirect_to_price_list_editor(
+                request,
+                price_list,
+                editor_message=f'Esiste gia un capo con codice "{sku}" in questo listino.',
+                editor_message_tag="danger",
+                status=400,
+            )
+
+        return redirect_to_price_list_editor(
+            request,
+            price_list,
+            active_item=price_list_item,
+            editor_message=f'Capo "{name}" aggiunto al listino "{price_list.name}".',
+        )
+
+    return redirect(get_price_list_detail_url(price_list))
+
+
+@login_required
+def update_price_list_item_view(request, pk, item_pk):
+    price_list, price_list_item = get_price_list_item_or_404(pk, item_pk)
+
+    if request.method == "POST":
+        sku = (request.POST.get("sku") or "").strip()
+        name = (request.POST.get("name") or "").strip()
+        description = (request.POST.get("description") or "").strip()
+
+        if not sku or not name:
+            return redirect_to_price_list_editor(
+                request,
+                price_list,
+                active_item=price_list_item,
+                editor_message="Inserisci un codice/SKU e un nome validi per il capo.",
+                editor_message_tag="danger",
+                status=400,
+                active_tab="general",
+            )
+
+        if price_list.items.exclude(pk=price_list_item.pk).filter(sku=sku).exists():
+            return redirect_to_price_list_editor(
+                request,
+                price_list,
+                active_item=price_list_item,
+                editor_message=f'Esiste gia un capo con codice "{sku}" in questo listino.',
+                editor_message_tag="danger",
+                status=400,
+                active_tab="general",
+            )
+
+        try:
+            price_list_item.sku = sku
+            price_list_item.name = name
+            price_list_item.description = description or None
+            price_list_item.is_active = "is_active" in request.POST
+            price_list_item.save()
+        except IntegrityError:
+            return redirect_to_price_list_editor(
+                request,
+                price_list,
+                active_item=price_list_item,
+                editor_message=f'Esiste gia un capo con codice "{sku}" in questo listino.',
+                editor_message_tag="danger",
+                status=400,
+                active_tab="general",
+            )
+
+        return redirect_to_price_list_editor(
+            request,
+            price_list,
+            active_item=price_list_item,
+            editor_message=f'Capo "{price_list_item.name}" aggiornato con successo.',
+            active_tab="general",
+        )
+
+    return redirect(get_price_list_detail_url(price_list, active_item=price_list_item))
+
+
+@login_required
+def delete_price_list_item_view(request, pk, item_pk):
+    price_list, price_list_item = get_price_list_item_or_404(pk, item_pk)
+
+    if request.method == "POST":
+        item_name = price_list_item.name
+        price_list_item.delete()
+        return redirect_to_price_list_editor(
+            request,
+            price_list,
+            editor_message=f'Capo "{item_name}" eliminato dal listino "{price_list.name}".',
+        )
+
+    return redirect(get_price_list_detail_url(price_list, active_item=price_list_item))
+
+
+@login_required
+def create_price_list_item_photo_view(request, pk, item_pk):
+    price_list, price_list_item = get_price_list_item_or_404(pk, item_pk)
+
+    if request.method == "POST":
+        uploaded_photos = request.FILES.getlist("original_images")
+        should_be_main = "is_main" in request.POST or not price_list_item.photos.exists()
+
+        if not uploaded_photos:
+            return redirect_to_price_list_editor(
+                request,
+                price_list,
+                active_item=price_list_item,
+                editor_message="Seleziona un'immagine da caricare per il capo.",
+                editor_message_tag="danger",
+                status=400,
+                active_tab="photos",
+            )
+
+        next_order = get_next_sort_order(price_list_item.photos, field_name="order")
+        for index, uploaded_photo in enumerate(uploaded_photos):
+            photo = PriceListItemPhoto.objects.create(
+                item=price_list_item,
+                original_image=uploaded_photo,
+                is_main=should_be_main and index == 0,
+                order=next_order + index,
+            )
+            if should_be_main and index == 0:
+                photo.save(update_fields=["is_main"])
+
+        return redirect_to_price_list_editor(
+            request,
+            price_list,
+            active_item=price_list_item,
+            editor_message=f'{len(uploaded_photos)} foto aggiunte al capo "{price_list_item.name}".',
+            active_tab="photos",
+        )
+
+    return redirect(get_price_list_detail_url(price_list, active_item=price_list_item))
+
+
+@login_required
+def set_price_list_item_photo_main_view(request, pk, item_pk, photo_pk):
+    price_list, price_list_item = get_price_list_item_or_404(pk, item_pk)
+    photo = get_object_or_404(PriceListItemPhoto, pk=photo_pk, item=price_list_item)
+
+    if request.method == "POST":
+        photo.is_main = True
+        photo.save(update_fields=["is_main"])
+        return redirect_to_price_list_editor(
+            request,
+            price_list,
+            active_item=price_list_item,
+            editor_message=f'Foto principale aggiornata per il capo "{price_list_item.name}".',
+            active_tab="photos",
+        )
+
+    return redirect(get_price_list_detail_url(price_list, active_item=price_list_item))
+
+
+@login_required
+def delete_price_list_item_photo_view(request, pk, item_pk, photo_pk):
+    price_list, price_list_item = get_price_list_item_or_404(pk, item_pk)
+    photo = get_object_or_404(PriceListItemPhoto, pk=photo_pk, item=price_list_item)
+
+    if request.method == "POST":
+        photo.delete()
+        ensure_item_has_main_photo(price_list_item)
+        return redirect_to_price_list_editor(
+            request,
+            price_list,
+            active_item=price_list_item,
+            editor_message=f'Foto rimossa dal capo "{price_list_item.name}".',
+            active_tab="photos",
+        )
+
+    return redirect(get_price_list_detail_url(price_list, active_item=price_list_item))
+
+
+@login_required
+def save_price_list_item_material_view(request, pk, item_pk, material_pk=None):
+    price_list, price_list_item = get_price_list_item_or_404(pk, item_pk)
+    material = None
+    if material_pk is not None:
+        material = get_object_or_404(PriceListItemMaterial, pk=material_pk, item=price_list_item)
+
+    if request.method == "POST":
+        description = (request.POST.get("description") or "").strip()
+        if not description:
+            return redirect_to_price_list_editor(
+                request,
+                price_list,
+                active_item=price_list_item,
+                editor_message="Inserisci una descrizione per il materiale primario.",
+                editor_message_tag="danger",
+                status=400,
+                active_tab="materials",
+            )
+
+        try:
+            quantity = parse_decimal_input(request.POST.get("quantity"), default=Decimal("0"))
+            unit_cost = parse_decimal_input(request.POST.get("unit_cost"), default=Decimal("0"))
+        except ValueError:
+            return redirect_to_price_list_editor(
+                request,
+                price_list,
+                active_item=price_list_item,
+                editor_message="Quantita o costo unitario non sono validi per il materiale.",
+                editor_message_tag="danger",
+                status=400,
+                active_tab="materials",
+            )
+
+        material_unit = normalize_choice(
+            request.POST.get("unit"),
+            PriceListItem.MaterialUnit.choices,
+            PriceListItem.MaterialUnit.PIECE,
+        )
+
+        if material is None:
+            material = PriceListItemMaterial(item=price_list_item, sort_order=get_next_sort_order(price_list_item.materials))
+            success_message = f'Materiale "{description}" aggiunto al capo "{price_list_item.name}".'
+        else:
+            success_message = f'Materiale "{description}" aggiornato con successo.'
+
+        material.material_type = normalize_choice(
+            request.POST.get("material_type"),
+            PriceListItem.MaterialType.choices,
+            PriceListItem.MaterialType.YARN,
+        )
+        material.description = description
+        material.supplier = ""
+        material.unit = material_unit
+        material.quantity = quantity
+        material.unit_cost = unit_cost
+        material.waste_pct = Decimal("0")
+        material.notes = ""
+        material.save()
+
+        return redirect_to_price_list_editor(
+            request,
+            price_list,
+            active_item=price_list_item,
+            editor_message=success_message,
+            active_tab="materials",
+        )
+
+    return redirect(get_price_list_detail_url(price_list, active_item=price_list_item))
+
+
+@login_required
+def delete_price_list_item_material_view(request, pk, item_pk, material_pk):
+    price_list, price_list_item = get_price_list_item_or_404(pk, item_pk)
+    material = get_object_or_404(PriceListItemMaterial, pk=material_pk, item=price_list_item)
+
+    if request.method == "POST":
+        material_name = material.description
+        material.delete()
+        return redirect_to_price_list_editor(
+            request,
+            price_list,
+            active_item=price_list_item,
+            editor_message=f'Materiale "{material_name}" eliminato con successo.',
+            active_tab="materials",
+        )
+
+    return redirect(get_price_list_detail_url(price_list, active_item=price_list_item))
+
+
+@login_required
+def save_price_list_item_work_view(request, pk, item_pk, work_pk=None):
+    price_list, price_list_item = get_price_list_item_or_404(pk, item_pk)
+    work = None
+    if work_pk is not None:
+        work = get_object_or_404(PriceListItemWork, pk=work_pk, item=price_list_item)
+
+    if request.method == "POST":
+        preset_code = (request.POST.get("preset_code") or "").strip()
+
+        if work is None:
+            if preset_code == "custom":
+                custom_name = (request.POST.get("custom_operation_name") or "").strip()
+                if not custom_name:
+                    return redirect_to_price_list_editor(
+                        request,
+                        price_list,
+                        active_item=price_list_item,
+                        editor_message="Inserisci il nome della lavorazione personalizzata.",
+                        editor_message_tag="danger",
+                        status=400,
+                        active_tab="works",
+                    )
+                try:
+                    quantity = parse_decimal_input(request.POST.get("quantity"), default=Decimal("0"))
+                    unit_cost = parse_decimal_input(request.POST.get("unit_cost"), default=Decimal("0"))
+                except ValueError:
+                    return redirect_to_price_list_editor(
+                        request,
+                        price_list,
+                        active_item=price_list_item,
+                        editor_message="Quantita o costo unitario non sono validi.",
+                        editor_message_tag="danger",
+                        status=400,
+                        active_tab="works",
+                    )
+                work = PriceListItemWork(item=price_list_item, sort_order=get_next_sort_order(price_list_item.works))
+                work.operation_name = custom_name
+                work.unit = (request.POST.get("unit") or "pz").strip() or "pz"
+                success_message = f'Lavorazione "{custom_name}" aggiunta al capo "{price_list_item.name}".'
+            else:
+                preset = WORK_PRESETS.get(preset_code)
+                if preset is None:
+                    return redirect_to_price_list_editor(
+                        request,
+                        price_list,
+                        active_item=price_list_item,
+                        editor_message="Seleziona una lavorazione predefinita valida.",
+                        editor_message_tag="danger",
+                        status=400,
+                        active_tab="works",
+                    )
+                quantity = preset["quantity"]
+                unit_cost = preset["unit_cost"]
+                work = PriceListItemWork(item=price_list_item, sort_order=get_next_sort_order(price_list_item.works))
+                work.operation_name = preset["label"]
+                work.unit = preset["unit"]
+                success_message = f'Lavorazione "{preset["label"]}" aggiunta al capo "{price_list_item.name}".'
+        else:
+            try:
+                quantity = parse_decimal_input(request.POST.get("quantity"), default=Decimal("0"))
+                unit_cost = parse_decimal_input(request.POST.get("unit_cost"), default=Decimal("0"))
+            except ValueError:
+                return redirect_to_price_list_editor(
+                    request,
+                    price_list,
+                    active_item=price_list_item,
+                    editor_message="Quantita o costo unitario non sono validi per la lavorazione.",
+                    editor_message_tag="danger",
+                    status=400,
+                    active_tab="works",
+                )
+            operation_name_input = (request.POST.get("operation_name") or "").strip()
+            if operation_name_input:
+                work.operation_name = operation_name_input
+            unit_input = (request.POST.get("unit") or "").strip()
+            if unit_input:
+                work.unit = unit_input
+            success_message = f'Lavorazione "{work.operation_name}" aggiornata con successo.'
+
+        work.quantity = quantity
+        work.unit_cost = unit_cost
+        work.notes = ""
+        work.save()
+
+        return redirect_to_price_list_editor(
+            request,
+            price_list,
+            active_item=price_list_item,
+            editor_message=success_message,
+            active_tab="works",
+        )
+
+    return redirect(get_price_list_detail_url(price_list, active_item=price_list_item))
+
+
+@login_required
+def delete_price_list_item_work_view(request, pk, item_pk, work_pk):
+    price_list, price_list_item = get_price_list_item_or_404(pk, item_pk)
+    work = get_object_or_404(PriceListItemWork, pk=work_pk, item=price_list_item)
+
+    if request.method == "POST":
+        work_name = work.operation_name
+        work.delete()
+        return redirect_to_price_list_editor(
+            request,
+            price_list,
+            active_item=price_list_item,
+            editor_message=f'Lavorazione "{work_name}" eliminata con successo.',
+            active_tab="works",
+        )
+
+    return redirect(get_price_list_detail_url(price_list, active_item=price_list_item))
+
+
+@login_required
+def save_price_list_item_external_cost_view(request, pk, item_pk, external_cost_pk=None):
+    price_list, price_list_item = get_price_list_item_or_404(pk, item_pk)
+    external_cost = None
+    if external_cost_pk is not None:
+        external_cost = get_object_or_404(PriceListItemExternalCost, pk=external_cost_pk, item=price_list_item)
+
+    if request.method == "POST":
+        try:
+            amount = parse_decimal_input(request.POST.get("amount"), default=Decimal("0"))
+        except ValueError:
+            return redirect_to_price_list_editor(
+                request,
+                price_list,
+                active_item=price_list_item,
+                editor_message="Il valore del costo esterno non e valido.",
+                editor_message_tag="danger",
+                status=400,
+                active_tab="external",
+            )
+
+        if external_cost is None:
+            preset_code = (request.POST.get("preset_code") or "").strip()
+            if preset_code == "custom":
+                description = (request.POST.get("description") or "").strip()
+                if not description:
+                    return redirect_to_price_list_editor(
+                        request,
+                        price_list,
+                        active_item=price_list_item,
+                        editor_message="Inserisci la descrizione del costo esterno.",
+                        editor_message_tag="danger",
+                        status=400,
+                        active_tab="external",
+                    )
+                cost_type = normalize_choice(
+                    request.POST.get("cost_type"),
+                    PriceListItem.ExternalCostType.choices,
+                    PriceListItem.ExternalCostType.FIXED,
+                )
+                applies_to = normalize_choice(
+                    request.POST.get("applies_to"),
+                    PriceListItem.ExternalCostBase.choices,
+                    PriceListItem.ExternalCostBase.SUBTOTAL,
+                )
+                external_cost = PriceListItemExternalCost(
+                    item=price_list_item,
+                    sort_order=get_next_sort_order(price_list_item.external_costs),
+                )
+                external_cost.description = description
+                external_cost.cost_type = cost_type
+                external_cost.applies_to = applies_to
+                external_cost.amount = amount
+                external_cost.notes = ""
+                success_message = f'Costo esterno "{description}" aggiunto al capo "{price_list_item.name}".'
+            else:
+                preset = EXTERNAL_COST_PRESETS.get(preset_code)
+                if preset is None:
+                    return redirect_to_price_list_editor(
+                        request,
+                        price_list,
+                        active_item=price_list_item,
+                        editor_message="Seleziona un costo esterno predefinito valido.",
+                        editor_message_tag="danger",
+                        status=400,
+                        active_tab="external",
+                    )
+
+                if price_list_item.external_costs.filter(description=preset["label"]).exists():
+                    return redirect_to_price_list_editor(
+                        request,
+                        price_list,
+                        active_item=price_list_item,
+                        editor_message=f'Il costo esterno "{preset["label"]}" e gia presente per questo capo.',
+                        editor_message_tag="warning",
+                        status=400,
+                        active_tab="external",
+                    )
+
+                external_cost = PriceListItemExternalCost(
+                    item=price_list_item,
+                    sort_order=get_next_sort_order(price_list_item.external_costs),
+                )
+                external_cost.description = preset["label"]
+                external_cost.cost_type = preset["cost_type"]
+                external_cost.applies_to = preset["applies_to"]
+                external_cost.amount = preset["amount"]
+                external_cost.notes = ""
+                success_message = f'Costo esterno "{preset["label"]}" aggiunto al capo "{price_list_item.name}".'
+        else:
+            external_cost.amount = amount
+            success_message = f'Costo esterno "{external_cost.description}" aggiornato con successo.'
+
+        external_cost.save()
+
+        return redirect_to_price_list_editor(
+            request,
+            price_list,
+            active_item=price_list_item,
+            editor_message=success_message,
+            active_tab="external",
+        )
+
+    return redirect(get_price_list_detail_url(price_list, active_item=price_list_item))
+
+
+@login_required
+def delete_price_list_item_external_cost_view(request, pk, item_pk, external_cost_pk):
+    price_list, price_list_item = get_price_list_item_or_404(pk, item_pk)
+    external_cost = get_object_or_404(PriceListItemExternalCost, pk=external_cost_pk, item=price_list_item)
+
+    if request.method == "POST":
+        cost_name = external_cost.description
+        external_cost.delete()
+        return redirect_to_price_list_editor(
+            request,
+            price_list,
+            active_item=price_list_item,
+            editor_message=f'Costo esterno "{cost_name}" eliminato con successo.',
+            active_tab="external",
+        )
+
+    return redirect(get_price_list_detail_url(price_list, active_item=price_list_item))
 
 
 @login_required

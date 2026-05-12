@@ -1,0 +1,253 @@
+{% extends 'user_profile/user_area_base.html' %}
+
+{% block user_content %}
+<style>
+    .price-list-back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        text-decoration: none;
+        color: var(--color-primary);
+        font-weight: 600;
+    }
+
+    .price-list-back-link:hover {
+        text-decoration: underline;
+    }
+
+    .price-list-detail-hero {
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        border: 1px solid rgba(70, 130, 180, 0.18);
+        border-radius: 1rem;
+        background: linear-gradient(135deg, rgba(70, 130, 180, 0.08), rgba(255, 255, 255, 0.96));
+    }
+
+    .price-list-detail-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .price-list-detail-label {
+        display: inline-block;
+        margin-bottom: 0.5rem;
+        font-size: 0.8rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--color-primary);
+    }
+
+    .price-list-detail-count {
+        min-width: 120px;
+        padding: 0.9rem 1rem;
+        border-radius: 0.9rem;
+        background-color: rgba(255, 255, 255, 0.82);
+        text-align: center;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+    }
+
+    .price-list-detail-count strong {
+        display: block;
+        font-size: 1.8rem;
+        line-height: 1;
+        color: var(--color-heading);
+    }
+
+    .price-list-panel {
+        height: 100%;
+        padding: 1.25rem;
+        border-radius: 0.9rem;
+        background-color: rgba(255, 255, 255, 0.94);
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.06);
+    }
+
+    .price-list-item-name,
+    .price-list-item-sku {
+        font-weight: 600;
+        color: var(--color-heading);
+    }
+
+    .price-list-thumb {
+        width: 48px;
+        height: 64px;
+        object-fit: cover;
+        border-radius: 0.75rem;
+        margin-right: 0.75rem;
+    }
+
+    .price-list-item-cell {
+        display: flex;
+        align-items: center;
+    }
+
+    .item-actions .btn {
+        height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        white-space: nowrap;
+        min-width: 32px;
+    }
+
+    .price-list-empty {
+        padding: 1.25rem;
+        border: 1px dashed rgba(70, 130, 180, 0.35);
+        border-radius: 0.85rem;
+        background-color: rgba(255, 255, 255, 0.72);
+        color: #5f6b77;
+    }
+
+    @media (max-width: 768px) {
+        .price-list-detail-hero {
+            padding: 1rem;
+        }
+
+        .price-list-detail-top {
+            flex-direction: column;
+        }
+
+        .price-list-detail-count {
+            width: 100%;
+        }
+    }
+</style>
+
+<a href="{% url 'price_list_list' %}" class="price-list-back-link" data-aos="fade-up">
+    <i class="fas fa-arrow-left"></i>
+    <span data-lang="it">Torna ai listini</span>
+    <span data-lang="en" class="d-none">Back to price lists</span>
+</a>
+
+<h1 class="dashboard-header mb-4" data-aos="fade-up">
+    {{ price_list.name }}
+</h1>
+
+<section class="price-list-detail-hero" data-aos="fade-up" data-aos-delay="100">
+    <div class="price-list-detail-top">
+        <div>
+            <span class="price-list-detail-label">Archivio capi</span>
+            <h2 class="h3 mb-2">
+                <span data-lang="it">Capi del listino</span>
+                <span data-lang="en" class="d-none">Price list garments</span>
+            </h2>
+            <p class="text-muted mb-0">
+                <span data-lang="it">Qui gestisci solo l'archivio del listino. Ogni capo si apre poi in una scheda dedicata, piu adatta alla compilazione di materiali, lavorazioni, costi esterni e foto.</span>
+                <span data-lang="en" class="d-none">Here you only manage the garment archive. Each garment then opens in a dedicated workspace better suited for materials, works, external costs, and photos.</span>
+            </p>
+        </div>
+
+        <div class="price-list-detail-count">
+            <strong>{{ price_list_items.count }}</strong>
+            <span data-lang="it">capi</span>
+            <span data-lang="en" class="d-none">garments</span>
+        </div>
+    </div>
+
+    <div class="row g-4 align-items-stretch">
+        <div class="col-lg-4">
+            <div class="price-list-panel">
+                <h3 class="h5 mb-3">
+                    <span data-lang="it">Nuovo Capo</span>
+                    <span data-lang="en" class="d-none">New Garment</span>
+                </h3>
+                <p class="text-muted small mb-3">
+                    <span data-lang="it">La creazione qui resta essenziale: solo codice e nome. Il resto si compila nella scheda dedicata del capo.</span>
+                    <span data-lang="en" class="d-none">Creation stays minimal here: code and name only. Everything else is completed in the dedicated garment workspace.</span>
+                </p>
+
+                <form action="{% url 'create_price_list_item' price_list.pk %}" method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="newItemSku" class="form-label">SKU / Codice</label>
+                        <input type="text" id="newItemSku" name="sku" class="form-control" maxlength="100" placeholder="TR-24015" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="newItemName" class="form-label">Nome capo</label>
+                        <input type="text" id="newItemName" name="name" class="form-control" maxlength="255" placeholder="Maglia in lana" required>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="fas fa-plus me-2"></i>
+                        <span data-lang="it">Crea e apri scheda</span>
+                        <span data-lang="en" class="d-none">Create and open workspace</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="price-list-panel">
+                <div class="d-flex justify-content-between align-items-center gap-3 mb-3 flex-wrap">
+                    <h3 class="h5 mb-0">
+                        <span data-lang="it">Archivio capi</span>
+                        <span data-lang="en" class="d-none">Garment archive</span>
+                    </h3>
+                    <span class="badge text-bg-light border">{{ price_list_items.count }}</span>
+                </div>
+
+                {% if price_list_items %}
+                <div class="table-responsive">
+                    <table class="table table-hover table-recipient align-middle mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Capo</th>
+                                <th>SKU</th>
+                                <th>Costo finale</th>
+                                <th>Azioni</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in price_list_items %}
+                            <tr>
+                                <td data-label="Capo:">
+                                    <div class="price-list-item-cell">
+                                        {% if item.main_photo %}
+                                        <img src="{{ item.main_photo.thumbnail.url }}" alt="{{ item.name }}" class="price-list-thumb">
+                                        {% endif %}
+                                        <div>
+                                            <div class="price-list-item-name">{{ item.name }}</div>
+                                            <small class="text-muted">{% if item.is_active %}Attivo{% else %}Bozza{% endif %}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td data-label="SKU:" class="price-list-item-sku">{{ item.sku|default:"-" }}</td>
+                                <td data-label="Costo finale:">€ {{ item.final_cost|floatformat:2 }}</td>
+                                <td data-label="Azioni:">
+                                    <form id="del-item-{{ item.pk }}" action="{% url 'delete_price_list_item' price_list.pk item.pk %}" method="post" hidden>
+                                        {% csrf_token %}
+                                    </form>
+                                    <div class="item-actions d-flex align-items-center gap-2">
+                                        <a href="{% url 'price_list_item_edit' price_list.pk item.pk %}" class="btn btn-sm btn-primary" title="Modifica">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <button type="submit" form="del-item-{{ item.pk }}" class="btn btn-sm btn-outline-danger" title="Elimina">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="price-list-empty">
+                    <strong>
+                        <span data-lang="it">Nessun capo presente.</span>
+                        <span data-lang="en" class="d-none">No garments yet.</span>
+                    </strong>
+                    <div>
+                        <span data-lang="it">Crea il primo capo dal pannello a sinistra e si aprira subito la sua scheda di compilazione.</span>
+                        <span data-lang="en" class="d-none">Create the first garment from the panel on the left and its dedicated workspace will open immediately.</span>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock user_content %}

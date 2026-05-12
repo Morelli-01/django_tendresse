@@ -208,3 +208,5 @@ __marimo__/
 *media*
 *.sql
 migrations/
+!user_profile/migrations/
+!user_profile/migrations/*.py

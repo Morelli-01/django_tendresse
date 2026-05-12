@@ -1,0 +1,195 @@
+{% extends 'user_profile/user_area_base.html' %}
+
+{% block user_content %}
+<style>
+    .price-list-page-hero {
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        border: 1px solid rgba(70, 130, 180, 0.18);
+        border-radius: 1rem;
+        background: linear-gradient(135deg, rgba(70, 130, 180, 0.08), rgba(255, 255, 255, 0.96));
+    }
+
+    .price-list-page-hero-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .price-list-page-label {
+        display: inline-block;
+        margin-bottom: 0.5rem;
+        font-size: 0.8rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--color-primary);
+    }
+
+    .price-list-page-count {
+        min-width: 120px;
+        padding: 0.9rem 1rem;
+        border-radius: 0.9rem;
+        background-color: rgba(255, 255, 255, 0.82);
+        text-align: center;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+    }
+
+    .price-list-page-count strong {
+        display: block;
+        font-size: 1.8rem;
+        line-height: 1;
+        color: var(--color-heading);
+    }
+
+    .price-list-panel {
+        height: 100%;
+        padding: 1.25rem;
+        border-radius: 0.9rem;
+        background-color: rgba(255, 255, 255, 0.94);
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.06);
+    }
+
+    .price-list-name {
+        font-weight: 600;
+        color: var(--color-heading);
+    }
+
+    .price-list-empty {
+        padding: 1.25rem;
+        border: 1px dashed rgba(70, 130, 180, 0.35);
+        border-radius: 0.85rem;
+        background-color: rgba(255, 255, 255, 0.72);
+        color: #5f6b77;
+    }
+
+    @media (max-width: 768px) {
+        .price-list-page-hero {
+            padding: 1rem;
+        }
+
+        .price-list-page-hero-top {
+            flex-direction: column;
+        }
+
+        .price-list-page-count {
+            width: 100%;
+        }
+    }
+</style>
+
+<h1 class="dashboard-header mb-4" data-aos="fade-up">
+    <span data-lang="it">Listini Prezzi</span>
+    <span data-lang="en" class="d-none">Price Lists</span>
+</h1>
+
+<section class="price-list-page-hero" data-aos="fade-up" data-aos-delay="100">
+    <div class="price-list-page-hero-top">
+        <div>
+            <span class="price-list-page-label">Listino Prezzi</span>
+            <h2 class="h3 mb-2">
+                <span data-lang="it">Archivio condiviso</span>
+                <span data-lang="en" class="d-none">Shared archive</span>
+            </h2>
+            <p class="text-muted mb-0">
+                <span data-lang="it">Crea e gestisci i diversi listini stagionali. Ogni listino contiene il proprio archivio di capi, costi e immagini.</span>
+                <span data-lang="en" class="d-none">Create and manage your seasonal price lists. Each list contains its own garment archive, costs, and images.</span>
+            </p>
+        </div>
+
+        <div class="price-list-page-count">
+            <strong>{{ price_lists.count }}</strong>
+            <span data-lang="it">listini</span>
+            <span data-lang="en" class="d-none">lists</span>
+        </div>
+    </div>
+
+    <div class="row g-4 align-items-stretch">
+        <div class="col-lg-4">
+            <div class="price-list-panel">
+                <h3 class="h5 mb-3">
+                    <span data-lang="it">Nuovo Listino</span>
+                    <span data-lang="en" class="d-none">New Price List</span>
+                </h3>
+                <p class="text-muted small mb-3">
+                    <span data-lang="it">Inserisci il nome del listino. Potrai poi aprirlo e costruire al suo interno i relativi capi.</span>
+                    <span data-lang="en" class="d-none">Enter the price list name. You can then open it and build its garments inside.</span>
+                </p>
+
+                <form action="{% url 'create_price_list' %}" method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="priceListName" class="form-label">Nome listino</label>
+                        <input type="text" id="priceListName" name="name" class="form-control" maxlength="255" placeholder="Autunno / Inverno" required>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="fas fa-plus me-2"></i>
+                        <span data-lang="it">Crea listino</span>
+                        <span data-lang="en" class="d-none">Create price list</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="price-list-panel">
+                <div class="d-flex justify-content-between align-items-center gap-3 mb-3 flex-wrap">
+                    <h3 class="h5 mb-0">
+                        <span data-lang="it">Listini disponibili</span>
+                        <span data-lang="en" class="d-none">Available price lists</span>
+                    </h3>
+                    <span class="badge text-bg-light border">{{ price_lists.count }}</span>
+                </div>
+
+                {% if price_lists %}
+                <div class="table-responsive">
+                    <table class="table table-hover table-recipient align-middle mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Nome</th>
+                                <th>Azioni</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for price_list in price_lists %}
+                            <tr>
+                                <td data-label="Nome:" class="price-list-name">{{ price_list.name }}</td>
+                                <td data-label="Azioni:">
+                                    <div class="btn-group" role="group">
+                                        <a href="{% url 'price_list_detail' price_list.pk %}" class="btn btn-sm btn-info text-white" style="background-color: #5D9CEC; border-radius: 5px; border-color:#5D9CEC;">
+                                            <i class="fas fa-folder-open me-1"></i>
+                                            <span data-lang="it">Apri</span>
+                                            <span data-lang="en" class="d-none">Open</span>
+                                        </a>
+                                        <form action="{% url 'delete_price_list' price_list.pk %}" method="post" class="d-inline-block" onsubmit="return confirm('Sei sicuro di voler eliminare questo listino prezzi?');">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-danger" style="background-color: #E74C3C; border-color:#E74C3C;">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="price-list-empty">
+                    <strong>
+                        <span data-lang="it">Ancora nessun listino.</span>
+                        <span data-lang="en" class="d-none">No price lists yet.</span>
+                    </strong>
+                    <div>
+                        <span data-lang="it">Crea il primo listino dal pannello a sinistra per iniziare a lavorare sui capi.</span>
+                        <span data-lang="en" class="d-none">Create the first price list from the panel on the left to start working on garments.</span>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock user_content %}

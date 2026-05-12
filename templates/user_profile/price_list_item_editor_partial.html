@@ -1,0 +1,750 @@
+<style>
+    .item-editor-back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        text-decoration: none;
+        color: var(--color-primary);
+        font-weight: 600;
+    }
+
+    .item-editor-back-link:hover {
+        text-decoration: underline;
+    }
+
+    .item-editor-hero {
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        border: 1px solid rgba(70, 130, 180, 0.18);
+        border-radius: 1rem;
+        background: linear-gradient(135deg, rgba(70, 130, 180, 0.08), rgba(255, 255, 255, 0.96));
+    }
+
+    .item-editor-hero-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .item-editor-label {
+        display: inline-block;
+        margin-bottom: 0.5rem;
+        font-size: 0.8rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--color-primary);
+    }
+
+    .item-editor-status {
+        min-width: 140px;
+        padding: 0.9rem 1rem;
+        border-radius: 0.9rem;
+        background-color: rgba(255, 255, 255, 0.82);
+        text-align: center;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+    }
+
+    .item-editor-status strong {
+        display: block;
+        font-size: 1rem;
+        line-height: 1.2;
+        color: var(--color-heading);
+    }
+
+    .item-editor-summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        gap: 1rem;
+    }
+
+    .item-editor-summary-card,
+    .item-editor-photo-card {
+        padding: 1.25rem;
+        border-radius: 0.9rem;
+        background-color: rgba(255, 255, 255, 0.94);
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.06);
+    }
+
+    .item-editor-panel {
+        padding: 1.25rem;
+        border-radius: 0.9rem;
+        background-color: rgba(255, 255, 255, 0.94);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    }
+
+    .item-editor-summary-card strong {
+        display: block;
+        font-size: 1.7rem;
+        line-height: 1;
+        color: var(--color-heading);
+        margin-bottom: 0.35rem;
+    }
+
+    .item-editor-tabs {
+        border-bottom: none;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .item-editor-tabs .nav-link {
+        border: none;
+        border-radius: 999px;
+        background-color: rgba(70, 130, 180, 0.08);
+        color: var(--color-heading);
+        font-weight: 600;
+        padding: 0.7rem 1rem;
+    }
+
+    .item-editor-tabs .nav-link.active {
+        background-color: var(--color-primary);
+        color: white;
+    }
+
+    .item-editor-form .form-label,
+    .item-editor-line-form .form-label,
+    .item-editor-upload-form .form-label {
+        font-weight: 600;
+        color: var(--color-heading);
+    }
+
+    .item-editor-line-list,
+    .item-editor-photo-grid {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .item-editor-photo-grid {
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    }
+
+    .item-editor-photo-card img {
+        width: 100%;
+        aspect-ratio: 3 / 4;
+        object-fit: cover;
+        border-radius: 0.85rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .item-editor-line-card {
+        padding: 0.75rem 1rem;
+        border-radius: 0.75rem;
+        background: rgba(70, 130, 180, 0.04);
+        border: 1px solid rgba(70, 130, 180, 0.18);
+        display: flex;
+        gap: 0.5rem;
+        align-items: flex-end;
+    }
+
+    .item-editor-line-form {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .item-editor-line-card .form-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: #5f6b77;
+        margin-bottom: 0.2rem;
+    }
+
+    .item-editor-line-card .form-control-sm,
+    .item-editor-line-card .form-select-sm {
+        height: 32px;
+    }
+
+    .item-editor-line-card .btn {
+        min-width: 72px;
+        padding-top: 0.25rem;
+        padding-bottom: 0.25rem;
+    }
+
+    .item-editor-line-toolbar,
+    .item-editor-photo-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .item-editor-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .item-editor-readonly {
+        height: 32px;
+        display: flex;
+        align-items: center;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        background-color: rgba(70, 130, 180, 0.1);
+        color: var(--color-heading);
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+
+    .item-editor-empty {
+        padding: 1.25rem;
+        border: 1px dashed rgba(70, 130, 180, 0.35);
+        border-radius: 0.85rem;
+        background-color: rgba(255, 255, 255, 0.72);
+        color: #5f6b77;
+    }
+
+    /* compact add-form rows */
+    .ie-add-form {
+        padding: 0.75rem 1rem;
+        background: rgba(70, 130, 180, 0.04);
+        border: 1px dashed rgba(70, 130, 180, 0.22);
+        border-radius: 0.75rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .ie-add-label {
+        display: block;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: #5f6b77;
+        margin-bottom: 0.2rem;
+    }
+
+    /* make all sm form elements identical height */
+    .ie-add-form .form-control-sm,
+    .ie-add-form .form-select-sm {
+        height: 32px;
+    }
+
+    @media (max-width: 768px) {
+        .item-editor-hero {
+            padding: 1rem;
+        }
+
+        .item-editor-hero-top,
+        .item-editor-line-toolbar,
+        .item-editor-photo-toolbar {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .item-editor-status {
+            width: 100%;
+        }
+    }
+</style>
+
+<div id="editor-alert">
+{% if editor_message %}
+<div class="alert alert-{{ editor_message_tag }}" role="alert">
+    {{ editor_message }}
+</div>
+{% endif %}
+</div>
+
+<a href="{% url 'price_list_detail' price_list.pk %}" class="item-editor-back-link" data-aos="fade-up">
+    <i class="fas fa-arrow-left"></i>
+    <span data-lang="it">Torna al listino</span>
+    <span data-lang="en" class="d-none">Back to price list</span>
+</a>
+
+<h1 class="dashboard-header mb-4" data-aos="fade-up">
+    {{ active_item.name }}
+</h1>
+
+<section class="item-editor-hero" data-aos="fade-up" data-aos-delay="100">
+    <div class="item-editor-hero-top">
+        <div>
+            <span class="item-editor-label">Scheda capo</span>
+            <h2 class="h3 mb-2">{{ active_item.sku }}</h2>
+            <p class="text-muted mb-0">
+                <span data-lang="it">Questa e la scheda dedicata del capo. Qui puoi lavorare su anagrafica, foto, materiali, lavorazioni e costi esterni.</span>
+                <span data-lang="en" class="d-none">Dedicated garment workspace.</span>
+            </p>
+        </div>
+        <div class="item-editor-status">
+            <strong>{% if active_item.is_active %}Attivo{% else %}Bozza{% endif %}</strong>
+            <span>stato capo</span>
+        </div>
+    </div>
+
+    <div class="item-editor-summary-grid" id="editor-summary-grid">
+        <div class="item-editor-summary-card">
+            <strong>€ {{ active_item.primary_total|floatformat:2 }}</strong>
+            <span>Materiali primari</span>
+        </div>
+        <div class="item-editor-summary-card">
+            <strong>€ {{ active_item.secondary_total|floatformat:2 }}</strong>
+            <span>Lavorazioni</span>
+        </div>
+        <div class="item-editor-summary-card">
+            <strong>€ {{ active_item.external_total|floatformat:2 }}</strong>
+            <span>Costi esterni</span>
+        </div>
+        <div class="item-editor-summary-card">
+            <strong>€ {{ active_item.final_cost|floatformat:2 }}</strong>
+            <span>Costo finale</span>
+        </div>
+    </div>
+</section>
+
+<ul class="nav item-editor-tabs mb-4" role="tablist" data-aos="fade-up" data-aos-delay="150">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link {% if active_tab == 'general' %}active{% endif %}" data-tab-key="general" id="general-tab" data-bs-toggle="tab" data-bs-target="#general-pane" type="button" role="tab" aria-controls="general-pane" aria-selected="{% if active_tab == 'general' %}true{% else %}false{% endif %}">Generale</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link {% if active_tab == 'photos' %}active{% endif %}" data-tab-key="photos" id="photos-tab" data-bs-toggle="tab" data-bs-target="#photos-pane" type="button" role="tab" aria-controls="photos-pane" aria-selected="{% if active_tab == 'photos' %}true{% else %}false{% endif %}">Foto</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link {% if active_tab == 'materials' %}active{% endif %}" data-tab-key="materials" id="materials-tab" data-bs-toggle="tab" data-bs-target="#materials-pane" type="button" role="tab" aria-controls="materials-pane" aria-selected="{% if active_tab == 'materials' %}true{% else %}false{% endif %}">Materiali primari</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link {% if active_tab == 'works' %}active{% endif %}" data-tab-key="works" id="works-tab" data-bs-toggle="tab" data-bs-target="#works-pane" type="button" role="tab" aria-controls="works-pane" aria-selected="{% if active_tab == 'works' %}true{% else %}false{% endif %}">Lavorazioni</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link {% if active_tab == 'external' %}active{% endif %}" data-tab-key="external" id="external-tab" data-bs-toggle="tab" data-bs-target="#external-pane" type="button" role="tab" aria-controls="external-pane" aria-selected="{% if active_tab == 'external' %}true{% else %}false{% endif %}">Costi esterni</button>
+    </li>
+</ul>
+
+<div class="tab-content" data-aos="fade-up" data-aos-delay="200">
+
+    {# ── GENERALE ─────────────────────────────────────────────────── #}
+    <div class="tab-pane fade {% if active_tab == 'general' %}show active{% endif %}" id="general-pane" role="tabpanel" aria-labelledby="general-tab" tabindex="0">
+        <div class="item-editor-panel">
+            <div class="item-editor-line-toolbar">
+                <div>
+                    <h3 class="h5 mb-1">Anagrafica capo</h3>
+                    <small class="text-muted">Dati principali del modello nel contesto di questo listino.</small>
+                </div>
+            </div>
+
+            <form action="{% url 'update_price_list_item' price_list.pk active_item.pk %}" method="post" class="item-editor-form js-item-editor-ajax">
+                {% csrf_token %}
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">SKU / Codice</label>
+                        <input type="text" name="sku" class="form-control" value="{{ active_item.sku }}" maxlength="100" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Nome capo</label>
+                        <input type="text" name="name" class="form-control" value="{{ active_item.name }}" maxlength="255" required>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Descrizione</label>
+                        <textarea name="description" class="form-control" rows="4">{{ active_item.description|default:"" }}</textarea>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="1" id="activeItemState" name="is_active" {% if active_item.is_active %}checked{% endif %}>
+                            <label class="form-check-label" for="activeItemState">Capo attivo nel listino</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="item-editor-actions">
+                    <button type="submit" class="btn btn-primary">Salva anagrafica</button>
+                </div>
+            </form>
+
+            <hr class="my-4">
+
+            <form action="{% url 'delete_price_list_item' price_list.pk active_item.pk %}" method="post" class="js-item-editor-ajax">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-danger">
+                    <i class="fas fa-trash me-2"></i>Elimina capo
+                </button>
+            </form>
+        </div>
+    </div>
+
+    {# ── FOTO ─────────────────────────────────────────────────────── #}
+    <div class="tab-pane fade {% if active_tab == 'photos' %}show active{% endif %}" id="photos-pane" role="tabpanel" aria-labelledby="photos-tab" tabindex="0">
+        <div class="item-editor-panel">
+            <div class="item-editor-photo-toolbar">
+                <div>
+                    <h3 class="h5 mb-1">Foto capo</h3>
+                    <small class="text-muted">Carica una o piu immagini e imposta la principale quando serve.</small>
+                </div>
+                <span class="badge text-bg-light border">{{ active_item.photos.count }} immagini</span>
+            </div>
+
+            <form action="{% url 'create_price_list_item_photo' price_list.pk active_item.pk %}" method="post" enctype="multipart/form-data" class="item-editor-upload-form js-item-editor-ajax">
+                {% csrf_token %}
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-8">
+                        <label class="form-label">Carica foto</label>
+                        <input type="file" name="original_images" class="form-control" accept="image/*" multiple required>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" value="1" id="newPhotoIsMain" name="is_main">
+                            <label class="form-check-label" for="newPhotoIsMain">Imposta la prima come principale</label>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100">Carica foto</button>
+                    </div>
+                </div>
+            </form>
+
+            {% if active_item.photos.all %}
+            <div class="item-editor-photo-grid mt-4">
+                {% for photo in active_item.photos.all %}
+                <div class="item-editor-photo-card">
+                    <img src="{{ photo.thumbnail.url }}" alt="{{ active_item.name }}">
+                    <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-2">
+                        <span class="badge {% if photo.is_main %}text-bg-success{% else %}text-bg-light border{% endif %}">
+                            {% if photo.is_main %}Principale{% else %}Secondaria{% endif %}
+                        </span>
+                        <small class="text-muted">Ordine {{ photo.order }}</small>
+                    </div>
+                    <div class="item-editor-actions">
+                        {% if not photo.is_main %}
+                        <form action="{% url 'set_price_list_item_photo_main' price_list.pk active_item.pk photo.pk %}" method="post" class="js-item-editor-ajax">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-primary">Rendi principale</button>
+                        </form>
+                        {% endif %}
+                        <form action="{% url 'delete_price_list_item_photo' price_list.pk active_item.pk photo.pk %}" method="post" class="js-item-editor-ajax">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Elimina</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="item-editor-empty mt-4">Nessuna foto caricata per questo capo.</div>
+            {% endif %}
+        </div>
+    </div>
+
+    {# ── MATERIALI ────────────────────────────────────────────────── #}
+    <div class="tab-pane fade {% if active_tab == 'materials' %}show active{% endif %}" id="materials-pane" role="tabpanel" aria-labelledby="materials-tab" tabindex="0">
+        <div class="item-editor-panel">
+            <div class="item-editor-line-toolbar">
+                <div>
+                    <h3 class="h5 mb-1">Materiali primari</h3>
+                    <small class="text-muted">Tipo, descrizione, quantita, unita e costo unitario.</small>
+                </div>
+                <span class="badge text-bg-light border">€ {{ active_item.primary_total|floatformat:2 }}</span>
+            </div>
+
+            <form action="{% url 'create_price_list_item_material' price_list.pk active_item.pk %}" method="post"
+                  class="ie-add-form js-item-editor-ajax js-add-form" data-form-type="materials">
+                {% csrf_token %}
+                <div class="row g-2">
+                    <div class="col-md-2">
+                        <label class="ie-add-label">Tipo</label>
+                        <select name="material_type" class="form-select form-select-sm">
+                            {% for v, l in material_type_choices %}<option value="{{ v }}">{{ l }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="ie-add-label">Descrizione</label>
+                        <input type="text" name="description" class="form-control form-control-sm" placeholder="es. Filato merino 100g" maxlength="255" required>
+                    </div>
+                    <div class="col-md-1">
+                        <label class="ie-add-label">Qtà</label>
+                        <input type="text" name="quantity" class="form-control form-control-sm text-end" value="0">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="ie-add-label">Unità</label>
+                        <select name="unit" class="form-select form-select-sm">
+                            {% for v, l in material_unit_choices %}<option value="{{ v }}">{{ l }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="ie-add-label">Costo / unità (€)</label>
+                        <input type="text" name="unit_cost" class="form-control form-control-sm text-end" placeholder="0.00" value="0">
+                    </div>
+                    <div class="col-md-1 d-flex align-items-end">
+                        <button type="submit" class="btn btn-sm btn-success w-100" title="Aggiungi materiale"><i class="fas fa-plus"></i></button>
+                    </div>
+                </div>
+            </form>
+
+            {% if active_item.materials.all %}
+            <div class="item-editor-line-list">
+                {% for material in active_item.materials.all %}
+                <div class="item-editor-line-card">
+                    <form id="save-mat-{{ material.pk }}" action="{% url 'update_price_list_item_material' price_list.pk active_item.pk material.pk %}" method="post" class="item-editor-line-form js-item-editor-ajax js-line-autosave">
+                        {% csrf_token %}
+                        <div class="row g-2">
+                            <div class="col-md-2">
+                                <label class="form-label">Tipo</label>
+                                <select name="material_type" class="form-select form-select-sm">
+                                    {% for v, l in material_type_choices %}
+                                    <option value="{{ v }}" {% if material.material_type == v %}selected{% endif %}>{{ l }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Descrizione</label>
+                                <input type="text" name="description" class="form-control form-control-sm" value="{{ material.description }}" maxlength="255" required>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Qtà</label>
+                                <input type="text" name="quantity" class="form-control form-control-sm text-end" value="{{ material.quantity }}">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Unità</label>
+                                <select name="unit" class="form-select form-select-sm" data-unit-target="mat-cost-lbl-{{ material.pk }}">
+                                    {% for v, l in material_unit_choices %}
+                                    <option value="{{ v }}" {% if material.unit == v %}selected{% endif %}>{{ l }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label" id="mat-cost-lbl-{{ material.pk }}">€ / {{ material.unit }}</label>
+                                <input type="text" name="unit_cost" class="form-control form-control-sm text-end" value="{{ material.unit_cost }}">
+                            </div>
+                            <div class="col-md-1">
+                                <label class="form-label">Subtot.</label>
+                                <div class="item-editor-readonly text-end">{{ material.subtotal|floatformat:2 }}</div>
+                            </div>
+                        </div>
+                    </form>
+                    <form id="del-mat-{{ material.pk }}" action="{% url 'delete_price_list_item_material' price_list.pk active_item.pk material.pk %}" method="post"
+                          class="js-item-editor-ajax" hidden>
+                        {% csrf_token %}
+                    </form>
+                    <button type="submit" form="del-mat-{{ material.pk }}" class="btn btn-sm btn-outline-danger flex-shrink-0">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="item-editor-empty">Nessun materiale primario inserito per questo capo.</div>
+            {% endif %}
+        </div>
+    </div>
+
+    {# ── LAVORAZIONI ──────────────────────────────────────────────── #}
+    <div class="tab-pane fade {% if active_tab == 'works' %}show active{% endif %}" id="works-pane" role="tabpanel" aria-labelledby="works-tab" tabindex="0">
+        <div class="item-editor-panel">
+            <div class="item-editor-line-toolbar">
+                <div>
+                    <h3 class="h5 mb-1">Lavorazioni</h3>
+                    <small class="text-muted">Aggiungi un preset con un clic oppure inserisci una voce personalizzata sotto.</small>
+                </div>
+                <span class="badge text-bg-light border">€ {{ active_item.secondary_total|floatformat:2 }}</span>
+            </div>
+
+            <div class="mb-3">
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                    <small class="text-muted fw-semibold text-nowrap">Preset:</small>
+                    {% for preset_code, preset in work_presets.items %}
+                    <form action="{% url 'create_price_list_item_work' price_list.pk active_item.pk %}" method="post" class="js-item-editor-ajax d-inline-flex align-items-center gap-1">
+                        {% csrf_token %}
+                        <input type="hidden" name="preset_code" value="{{ preset_code }}">
+                        <button type="submit" class="btn btn-sm btn-outline-secondary"
+                                title="{{ preset.quantity }} {{ preset.unit }} × €{{ preset.unit_cost|floatformat:2 }}">
+                            {{ preset.label }}
+                        </button>
+                        <button type="button" class="btn btn-sm btn-link p-0 text-secondary js-fill-preset"
+                                data-form-type="works"
+                                data-name="{{ preset.label }}"
+                                data-quantity="{{ preset.quantity }}"
+                                data-unit="{{ preset.unit }}"
+                                data-cost="{{ preset.unit_cost|floatformat:2 }}"
+                                title="Personalizza valori poi aggiungi">
+                            <i class="fas fa-pen" style="font-size:.65rem;"></i>
+                        </button>
+                    </form>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <form action="{% url 'create_price_list_item_work' price_list.pk active_item.pk %}" method="post"
+                  class="ie-add-form js-item-editor-ajax js-add-form" data-form-type="works">
+                {% csrf_token %}
+                <input type="hidden" name="preset_code" value="custom">
+                <div class="row g-2">
+                    <div class="col-md-4">
+                        <label class="ie-add-label">Nome lavorazione</label>
+                        <input type="text" name="custom_operation_name" class="form-control form-control-sm" placeholder="es. Cucitura manuale" required>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="ie-add-label">Qtà</label>
+                        <input type="text" name="quantity" class="form-control form-control-sm text-end" value="1">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="ie-add-label">Unità</label>
+                        <input type="text" name="unit" class="form-control form-control-sm" placeholder="pz" value="pz">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="ie-add-label">Costo / unità (€)</label>
+                        <input type="text" name="unit_cost" class="form-control form-control-sm text-end" placeholder="0.00" value="0">
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-sm btn-success w-100"><i class="fas fa-plus me-1"></i>Aggiungi</button>
+                    </div>
+                </div>
+            </form>
+
+            {% if active_item.works.all %}
+            <div class="item-editor-line-list">
+                {% for work in active_item.works.all %}
+                <div class="item-editor-line-card">
+                    <form id="save-work-{{ work.pk }}" action="{% url 'update_price_list_item_work' price_list.pk active_item.pk work.pk %}" method="post" class="item-editor-line-form js-item-editor-ajax js-line-autosave">
+                        {% csrf_token %}
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <label class="form-label">Lavorazione</label>
+                                <input type="text" name="operation_name" class="form-control form-control-sm" value="{{ work.operation_name }}" required>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Qtà</label>
+                                <input type="text" name="quantity" class="form-control form-control-sm text-end" value="{{ work.quantity }}">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Unità</label>
+                                <input type="text" name="unit" class="form-control form-control-sm" value="{{ work.unit }}">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">€ / unità</label>
+                                <input type="text" name="unit_cost" class="form-control form-control-sm text-end" value="{{ work.unit_cost }}">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Subtot.</label>
+                                <div class="item-editor-readonly text-end">{{ work.subtotal|floatformat:2 }}</div>
+                            </div>
+                        </div>
+                    </form>
+                    <form id="del-work-{{ work.pk }}" action="{% url 'delete_price_list_item_work' price_list.pk active_item.pk work.pk %}" method="post"
+                          class="js-item-editor-ajax" hidden>
+                        {% csrf_token %}
+                    </form>
+                    <button type="submit" form="del-work-{{ work.pk }}" class="btn btn-sm btn-outline-danger flex-shrink-0">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="item-editor-empty">Nessuna lavorazione inserita per questo capo.</div>
+            {% endif %}
+        </div>
+    </div>
+
+    {# ── COSTI ESTERNI ────────────────────────────────────────────── #}
+    <div class="tab-pane fade {% if active_tab == 'external' %}show active{% endif %}" id="external-pane" role="tabpanel" aria-labelledby="external-tab" tabindex="0">
+        <div class="item-editor-panel">
+            <div class="item-editor-line-toolbar">
+                <div>
+                    <h3 class="h5 mb-1">Costi esterni</h3>
+                    <small class="text-muted">Aggiungi un preset con un clic oppure inserisci una voce personalizzata sotto.</small>
+                </div>
+                <span class="badge text-bg-light border">€ {{ active_item.external_total|floatformat:2 }}</span>
+            </div>
+
+            <div class="mb-3">
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                    <small class="text-muted fw-semibold text-nowrap">Preset:</small>
+                    {% for preset_code, preset in external_cost_presets.items %}
+                    <form action="{% url 'create_price_list_item_external_cost' price_list.pk active_item.pk %}" method="post" class="js-item-editor-ajax d-inline-flex align-items-center gap-1">
+                        {% csrf_token %}
+                        <input type="hidden" name="preset_code" value="{{ preset_code }}">
+                        <button type="submit" class="btn btn-sm btn-outline-secondary">
+                            {{ preset.label }}
+                            <span class="opacity-75 ms-1">{% if preset.cost_type == 'percentage' %}{{ preset.amount|floatformat:0 }}%{% else %}€{{ preset.amount|floatformat:2 }}{% endif %}</span>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-link p-0 text-secondary js-fill-preset"
+                                data-form-type="external"
+                                data-desc="{{ preset.label }}"
+                                data-cost-type="{{ preset.cost_type }}"
+                                data-amount="{{ preset.amount|floatformat:2 }}"
+                                data-applies-to="{{ preset.applies_to }}"
+                                title="Personalizza valori poi aggiungi">
+                            <i class="fas fa-pen" style="font-size:.65rem;"></i>
+                        </button>
+                    </form>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <form action="{% url 'create_price_list_item_external_cost' price_list.pk active_item.pk %}" method="post"
+                  class="ie-add-form js-item-editor-ajax js-add-form" data-form-type="external">
+                {% csrf_token %}
+                <input type="hidden" name="preset_code" value="custom">
+                <div class="row g-2">
+                    <div class="col-md-3">
+                        <label class="ie-add-label">Descrizione</label>
+                        <input type="text" name="description" class="form-control form-control-sm" placeholder="es. Spese generali" required>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="ie-add-label">Tipo</label>
+                        <select name="cost_type" class="form-select form-select-sm">
+                            {% for v, l in external_cost_type_choices %}<option value="{{ v }}">{{ l }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="ie-add-label">Valore (€ o %)</label>
+                        <input type="text" name="amount" class="form-control form-control-sm text-end" placeholder="0.00" value="0">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="ie-add-label">Applica a</label>
+                        <select name="applies_to" class="form-select form-select-sm">
+                            {% for v, l in external_cost_base_choices %}<option value="{{ v }}">{{ l }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-sm btn-success w-100"><i class="fas fa-plus me-1"></i>Aggiungi</button>
+                    </div>
+                </div>
+            </form>
+
+            {% if active_item.external_costs.all %}
+            <div class="item-editor-line-list">
+                {% for external_cost in active_item.external_costs.all %}
+                <div class="item-editor-line-card">
+                    <form id="save-ext-{{ external_cost.pk }}" action="{% url 'update_price_list_item_external_cost' price_list.pk active_item.pk external_cost.pk %}" method="post" class="item-editor-line-form js-item-editor-ajax js-line-autosave">
+                        {% csrf_token %}
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <label class="form-label">Voce</label>
+                                <div class="item-editor-readonly">{{ external_cost.description }}</div>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Tipo</label>
+                                <div class="item-editor-readonly">
+                                    {% if external_cost.cost_type == 'percentage' %}Percentuale{% else %}Fisso{% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Applica a</label>
+                                <div class="item-editor-readonly">{{ external_cost.get_applies_to_display }}</div>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">{% if external_cost.cost_type == 'percentage' %}Valore (%){% else %}Valore (€){% endif %}</label>
+                                <input type="text" name="amount" class="form-control form-control-sm text-end" value="{{ external_cost.amount }}">
+                            </div>
+                        </div>
+                    </form>
+                    <form id="del-ext-{{ external_cost.pk }}" action="{% url 'delete_price_list_item_external_cost' price_list.pk active_item.pk external_cost.pk %}" method="post"
+                          class="js-item-editor-ajax" hidden>
+                        {% csrf_token %}
+                    </form>
+                    <button type="submit" form="del-ext-{{ external_cost.pk }}" class="btn btn-sm btn-outline-danger flex-shrink-0">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="item-editor-empty">Nessun costo esterno inserito per questo capo.</div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>

@@ -1,0 +1,144 @@
+{% extends 'user_profile/user_area_base.html' %}
+
+{% block user_content %}
+<div id="itemEditorMount">
+    {% include 'user_profile/price_list_item_editor_partial.html' %}
+</div>
+{% endblock user_content %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const editorMount = document.getElementById('itemEditorMount');
+    if (!editorMount) return;
+
+    function getActiveTabKey() {
+        const active = editorMount.querySelector('.item-editor-tabs .nav-link.active');
+        return active ? active.getAttribute('data-tab-key') : 'general';
+    }
+
+    function updateUnitLabels(scope) {
+        scope.querySelectorAll('[data-unit-target]').forEach((sel) => {
+            const lbl = scope.querySelector('#' + sel.getAttribute('data-unit-target'));
+            if (lbl) lbl.textContent = `€ / ${sel.value || 'pz'}`;
+        });
+    }
+
+    function bindUnitLabels(scope) {
+        updateUnitLabels(scope);
+        scope.querySelectorAll('[data-unit-target]').forEach((sel) => {
+            if (sel._unitBound) return;
+            sel._unitBound = true;
+            sel.addEventListener('change', () => updateUnitLabels(scope));
+        });
+    }
+
+    function applyUpdate(html, activeTab) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+
+        // alert zone
+        const na = doc.querySelector('#editor-alert');
+        const oa = editorMount.querySelector('#editor-alert');
+        if (na && oa) oa.replaceWith(na.cloneNode(true));
+
+        // cost summary (silent)
+        const ns = doc.querySelector('#editor-summary-grid');
+        const os = editorMount.querySelector('#editor-summary-grid');
+        if (ns && os) os.innerHTML = ns.innerHTML;
+
+        // active pane only
+        const paneId = `${activeTab}-pane`;
+        const np = doc.querySelector(`#${paneId}`);
+        const op = editorMount.querySelector(`#${paneId}`);
+        if (np && op) {
+            op.innerHTML = np.innerHTML;
+            op.style.transition = 'opacity 0.12s';
+            op.style.opacity = '0';
+            requestAnimationFrame(() => { op.style.opacity = '1'; });
+        } else {
+            // fallback: full swap
+            editorMount.innerHTML = html;
+        }
+
+        bindUnitLabels(editorMount);
+        if (window.AOS) window.AOS.refresh();
+    }
+
+    async function submitEditorForm(formEl) {
+        const activeTab = getActiveTabKey();
+        const formData = new FormData(formEl);
+        formData.set('active_tab', activeTab);
+
+        const response = await fetch(formEl.action, {
+            method: formEl.method || 'POST',
+            body: formData,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            credentials: 'same-origin',
+        });
+
+        applyUpdate(await response.text(), activeTab);
+    }
+
+    bindUnitLabels(editorMount);
+
+    // auto-save line cards on blur (text inputs) and change (selects)
+    editorMount.addEventListener('blur', function (e) {
+        const input = e.target;
+        if (!input.matches('input')) return;
+        const form = input.closest('.js-line-autosave');
+        if (!form) return;
+        submitEditorForm(form).catch(() => {});
+    }, true);
+
+    editorMount.addEventListener('change', function (e) {
+        const input = e.target;
+        if (!input.matches('select')) return;
+        const form = input.closest('.js-line-autosave');
+        if (!form) return;
+        submitEditorForm(form).catch(() => {});
+    });
+
+    // form submit (AJAX)
+    editorMount.addEventListener('submit', async function (e) {
+        const form = e.target.closest('.js-item-editor-ajax');
+        if (!form) return;
+        e.preventDefault();
+
+        const msg = form.dataset.confirm;
+        if (msg && !window.confirm(msg)) return;
+
+        try {
+            await submitEditorForm(form);
+        } catch {
+            window.location.reload();
+        }
+    });
+
+    // pencil button: fill the custom add-form with preset values
+    editorMount.addEventListener('click', function (e) {
+        const btn = e.target.closest('.js-fill-preset');
+        if (!btn) return;
+
+        const formType = btn.dataset.formType;
+        const form = editorMount.querySelector(`.js-add-form[data-form-type="${formType}"]`);
+        if (!form) return;
+
+        const d = btn.dataset;
+        const set = (name, val) => { if (val == null) return; const el = form.querySelector(`[name="${name}"]`); if (el) el.value = val; };
+
+        set('custom_operation_name', d.name);
+        set('quantity',              d.quantity);
+        set('unit',                  d.unit);
+        set('unit_cost',             d.cost);
+        set('description',           d.desc);
+        set('amount',                d.amount);
+        set('cost_type',             d.costType);
+        set('applies_to',            d.appliesTo);
+
+        form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        form.querySelector('input[type="text"]')?.focus();
+    });
+});
+</script>
+{% endblock extra_js %}
